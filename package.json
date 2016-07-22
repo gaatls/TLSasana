@@ -1,0 +1,29 @@
+{
+  "name": "tls-asana",
+  "version": "1.0.0",
+  "description": "A utility library for connecting to the TLS asana instance. Contains a few useful wrappers for common TLS related functions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaatls/TLSasana.git"
+  },
+  "keywords": [
+    "Asana",
+    "TLS"
+  ],
+  "author": "Graham Anthony",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gaatls/TLSasana/issues"
+  },
+  "homepage": "https://github.com/gaatls/TLSasana#readme",
+  "dependencies": {
+    "asana": "^0.14.1"
+  },
+  "devDependencies": {
+    "mocha": "^2.5.3"
+  }
+}
