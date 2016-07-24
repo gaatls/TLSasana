@@ -28,4 +28,11 @@ describe('Querying Asana', function(){
             assert.ok(list.length > 0); 
         });
     });
+    
+    it('Gets information about a specific task from asana', function(){
+        this.timeout(8000);
+        return tlsAsana.getTaskInfo('158749385851178').then(function(data){
+            assert.deepEqual(data.created_at, '2016-07-22T19:14:05.354Z' ); 
+        });
+    });
 });
