@@ -4,7 +4,7 @@
   "description": "A utility library for connecting to the TLS asana instance. Contains a few useful wrappers for common TLS related functions.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./test/test.js"
+    "test": "mocha test"
   },
   "repository": {
     "type": "git",

@@ -5,6 +5,8 @@ let client = null;
 
 const UNASSIGNED = '44184307053957';
 const CAPTIONING = '79193009274138';
+const NEWTASK = '44184307053951';
+
 module.exports ={
     
     /**
@@ -33,11 +35,26 @@ module.exports ={
             });
     },
     
+    /**
+    * Returns all of the tasks that unassigned
+    **/
     getUnassigned: function(){
         return new Promise(
             function(resolve, reject){
                 client.tasks.findByTag(UNASSIGNED).then(function(list){
                     resolve(list.data);
+                });
+            });
+    },
+    
+    /**
+    * Returns all of the new requests
+    **/
+    getNewRequests: function(){
+        return new Promise(
+            function(resolve, reject){
+                client.tasks.findByTag(NEWTASK).then(function(list){
+                    resolve(list.data); 
                 });
             });
     }
