@@ -21,9 +21,9 @@ module.exports = {
     , /**
      * Gets a list of all of the tasks in the asana instance
      **/
-    getTasks: function () {
+    getTasksByTag: function (tag) {
         return new Promise(function (resolve, reject) {
-            client.projects.tasks(tlsVars.TAG_CAPTIONING).then(function (list) {
+            client.projects.tasks(tag).then(function (list) {
                 resolve(list.data);
             });
         });
@@ -88,6 +88,21 @@ module.exports = {
                 resolve(sectionList.data); 
             });
         }); 
-    }
+    },
     
+    /**
+    * Moves a specific task to a specific section
+    * 
+    * @param taskID The task to be moved
+    * @param newSection The section ID to move the task to
+    * @param projectID The project ID the task resides in
+    */
+    
+    moveTaskToSection: function(taskID, newSection, projectID){
+        return new Promise( function(resolve,reject){
+            client.tasks.addProject(taskID, {project: projectID, section:newSection}).then(function(taskBack){
+                resolve(taskBack);
+            });
+        });
+    }
 }

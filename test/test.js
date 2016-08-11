@@ -9,9 +9,9 @@ describe('Connecting to Asana', function(){
 });
 
 describe('Querying Asana', function(){
-    it('gets all of the tasks in Asana', function(){
+    it('gets all of the tasks in Asana with a captioning tag', function(){
         this.timeout(8000);
-        return tlsAsana.getTasks().then(function(list){
+        return tlsAsana.getTasksByTag(tlsConsts.TAG_CAPTIONING).then(function(list){
             assert.ok(list.length > 0);
         });
     });
@@ -48,7 +48,23 @@ describe('Querying Asana', function(){
         this.timeout(8000);
         return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(function(sections){
             assert.ok( sections.length > 0);
-            console.log(sections);
+        });
+    });
+    
+});
+
+describe('Working with sections in Asana', function(){
+    it('sets the section to unassigned', function(){
+        this.timeout(8000);
+        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
+            assert({});
+        });
+    });
+    
+    it('sets the section to accepted', function(){
+        this.timeout(8000);
+        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
+            assert({});
         });
     });
 });

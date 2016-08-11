@@ -15,5 +15,15 @@ module.exports = {
     /**
     * Constants the represent the projects currently in the TLS instance of Asana
     */
-    PROJ_NTP:'166216691534199'//Represents the new team project used for testing.
+    PROJ_NTP:'166216691534199',//Represents the new team project used for testing.
+    
+    /**
+    * Constants that represent the different sections within the TLS instance of Asana
+    */
+    SECTION_UNASSIGNED:'166669995987454',
+    SECTION_ACCEPTED:'166669995987458',
+    SECTION_CAPTION_IN_PROCESS:'166669995987460',
+    SECTION_CAPTION_COMPLETE:'166669995987462',
+    SECTION_CAPTION_VERIFIED:'166669995987456',
+    SECTION_COMPLETE:'166669995987468'
 }

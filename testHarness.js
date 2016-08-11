@@ -1,4 +1,5 @@
 var asana = require('./index.js');
+var TLSvars = require('./tlsConstants.js')
 
 asana.connect();
 
@@ -35,6 +36,16 @@ try{
     asana.getAllProjects().then(function(projects){
         console.log("==============ALL PROJECTS=========================");
         console.log(projects);
+        console.log("===================================================");
+    });
+}catch(err){
+    console.log("error: " + err)
+}
+
+try{
+    asana.moveTaskToSection('166304358745259', TLSvars.SECTION_ACCEPTED).then(function(task){
+        console.log("=====================TASKS=========================");
+        console.log(task);
         console.log("===================================================");
     });
 }catch(err){
