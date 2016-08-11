@@ -73,7 +73,21 @@ module.exports = {
                 resolve(projectList.data);
             });
         });
-    }
+    },
     
+    /**
+    * Returns a list of all of the sections currently within a project
+    *
+    * @param projectID The projectID in which the sections reside
+    * @return {Promise} A promise containing the list of all of the sections within a project
+    */
+    
+    getAllSections: function(projectID){
+        return new Promise( function(resolve,reject){
+            client.projects.sections(projectID).then( function(sectionList){
+                resolve(sectionList.data); 
+            });
+        }); 
+    }
     
 }

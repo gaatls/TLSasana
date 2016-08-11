@@ -1,5 +1,6 @@
 var assert = require('assert');
 var tlsAsana = require('../index.js');
+var tlsConsts = require('../tlsConstants.js')
 
 describe('Connecting to Asana', function(){
    it('Should return "connected"', function(){
@@ -40,6 +41,14 @@ describe('Querying Asana', function(){
         this.timeout(8000);
         return tlsAsana.getAllProjects().then(function(projects){
             assert.ok( projects.length > 0 ); 
+        });
+    });
+    
+    it('gets all of the sections within the test project', function(){
+        this.timeout(8000);
+        return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(function(sections){
+            assert.ok( sections.length > 0);
+            console.log(sections);
         });
     });
 });
