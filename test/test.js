@@ -57,14 +57,22 @@ describe('Working with sections in Asana', function(){
     it('sets the section to unassigned', function(){
         this.timeout(8000);
         return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-            assert({});
+            assert(returnedTask);
         });
     });
     
     it('sets the section to accepted', function(){
         this.timeout(8000);
         return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-            assert({});
+            assert(returnedTask);
+        });
+    });
+});
+
+describe('Working with tasks in Asana', function(){
+    it('gets the information about a specific task', function(){
+        return tlsAsana.getTaskInfo('166304358745259').then(function(returnedTask){
+            assert.ok(returnedTask); 
         });
     });
 });

@@ -104,5 +104,20 @@ module.exports = {
                 resolve(taskBack);
             });
         });
+    },
+    
+    /**
+    * Gets the information associated with a specific task
+    *
+    * @param taskID the task information that you are looking for
+    * @return {promise} A promise containing the information about the specific taskID
+    **/
+    
+    getTaskInfo: function(taskID){
+        return new Promise( function(resolve,reject){
+            client.tasks.findById(taskID).then(function(taskBack){
+                resolve(taskBack); 
+            });
+        });
     }
 }
