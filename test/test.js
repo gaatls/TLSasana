@@ -9,19 +9,6 @@ describe('Connecting to Asana', function(){
 });
 
 describe('Querying Asana', function(){
-    it('gets all of the tasks in Asana with a captioning tag', function(){
-        this.timeout(8000);
-        return tlsAsana.getTasksByTag(tlsConsts.TAG_CAPTIONING).then(function(list){
-            assert.ok(list.length > 0);
-        });
-    });
-    
-    it('gets all of the unassigned tasks in Asana', function(){
-        this.timeout(8000);
-        return tlsAsana.getUnassigned().then(function(list){
-            assert.ok(list.length > 0);
-        });
-    });
     
     it('gets all of the new tasks in Asana', function(){
         this.timeout(8000);
@@ -44,35 +31,58 @@ describe('Querying Asana', function(){
         });
     });
     
-    it('gets all of the sections within the test project', function(){
+});
+
+//describe('Working with sections in Asana', function(){
+//
+//        it('gets all of the sections within the test project', function(){
+//            this.timeout(8000);
+//            return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(function(sections){
+//                assert.ok( sections.length > 0);
+//            });
+//});
+//    it('sets the section to unassigned', function(){
+//        this.timeout(8000);
+//        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
+//            assert(returnedTask);
+//        });
+//    });
+//    
+//    it('sets the section to accepted', function(){
+//        this.timeout(8000);
+//        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
+//            assert(returnedTask);
+//        });
+//    });
+//});
+//
+//describe('Working with tasks in Asana', function(){
+//    it('gets the information about a specific task', function(){
+//        return tlsAsana.getTaskInfo('166304358745259').then(function(returnedTask){
+//            assert.ok(returnedTask); 
+//        });
+//    });
+//});
+
+describe('Working with tags in Asana', function(){
+    it('gets all of the unassigned tags', function(){
         this.timeout(8000);
-        return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(function(sections){
-            assert.ok( sections.length > 0);
+        return tlsAsana.getTasksByTag(tlsConsts.TAG_CAPTIONING_UNASSIGNED).then(function(list){
+            assert.ok(list.length > 0); 
         });
     });
     
-});
-
-describe('Working with sections in Asana', function(){
-    it('sets the section to unassigned', function(){
+    it('gets all of the unassigned captioning tags in Asana', function(){
         this.timeout(8000);
-        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-            assert(returnedTask);
+        return tlsAsana.getUnassigned().then(function(list){
+            assert.ok(list.length > 0);
         });
     });
     
-    it('sets the section to accepted', function(){
+    it('changes a tag from captioning_unassigned to captioning_accepted', function(){
         this.timeout(8000);
-        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-            assert(returnedTask);
-        });
-    });
-});
-
-describe('Working with tasks in Asana', function(){
-    it('gets the information about a specific task', function(){
-        return tlsAsana.getTaskInfo('166304358745259').then(function(returnedTask){
-            assert.ok(returnedTask); 
+        return tlsAsana.switchTag('166304358745259', '167304830178312', '167304830178315').then(function(tag){
+            assert.ok(tag);
         });
     });
 });

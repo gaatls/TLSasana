@@ -23,7 +23,7 @@ module.exports = {
      **/
     getTasksByTag: function (tag) {
         return new Promise(function (resolve, reject) {
-            client.projects.tasks(tag).then(function (list) {
+            client.tasks.findByTag(tag).then(function (list) {
                 resolve(list.data);
             });
         });
@@ -33,7 +33,7 @@ module.exports = {
      **/
     getUnassigned: function () {
         return new Promise(function (resolve, reject) {
-            client.tasks.findByTag(tlsVars.TAG_UNASSIGNED).then(function (list) {
+            client.tasks.findByTag(tlsVars.TAG_CAPTIONING_UNASSIGNED).then(function (list) {
                 resolve(list.data);
             });
         });
@@ -48,7 +48,9 @@ module.exports = {
             });
         });
     }
-    , /**
+    , 
+    
+    /**
      * Returns information about a specific task
      *
      * @param taskID - the id in asana of the task we are interested in
@@ -106,17 +108,36 @@ module.exports = {
         });
     },
     
-    /**
-    * Gets the information associated with a specific task
-    *
-    * @param taskID the task information that you are looking for
-    * @return {promise} A promise containing the information about the specific taskID
-    **/
+//    /**
+//    * Gets the information associated with a specific task
+//    *
+//    * @param taskID the task information that you are looking for
+//    * @return {promise} A promise containing the information about the specific taskID
+//    **/
+//    
+//    getTaskInfo: function(taskID){
+//        return new Promise( function(resolve,reject){
+//            client.tasks.findById(taskID).then(function(taskBack){
+//                resolve(taskBack); 
+//            });
+//        });
+//    },
     
-    getTaskInfo: function(taskID){
-        return new Promise( function(resolve,reject){
-            client.tasks.findById(taskID).then(function(taskBack){
-                resolve(taskBack); 
+    /**
+    * switches from the current tag to a new tag
+    * 
+    * @param taskID the id of the task that you'd like to switch
+    * @param oldTag the tagID from tlsConstants that you'd like to switch from
+    * @param newTag the tagID from tlsConstants that you'd like to switch to
+    * @return {promise} A promise containing the task information after change
+    */
+    
+    switchTag: function(taskID, oldTag, newTag){
+        return new Promise( function(resolve, reject){
+            client.tasks.addTag(taskID, {tag:newTag}).then( function(taskBack){
+                client.tasks.removeTag(taskID, {tag:oldTag}).then(function(taskAfter){
+                    resolve(taskAfter);  
+                });
             });
         });
     }
