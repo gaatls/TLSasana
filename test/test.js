@@ -85,4 +85,11 @@ describe('Working with tags in Asana', function(){
             assert.ok(tag);
         });
     });
+    
+    it('changes a tag back from captioning_accepted to captioning_unassigned', function(){
+        this.timeout(8000);
+        return tlsAsana.switchTag('166304358745259', '167304830178315', '167304830178312').then(function(tag){
+            assert.ok(tag);
+        });
+    });
 });
