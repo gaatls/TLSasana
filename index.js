@@ -8,6 +8,8 @@ module.exports = {
     /**
      * Always needs to be run first to startup the connection between node and asana.
      * Everything else uses this connection to run.
+     *
+     * @return {Object} The connection to the Asana server
      **/
     connect: function () {
         try {
@@ -20,6 +22,8 @@ module.exports = {
     }
     , /**
      * Gets a list of all of the tasks in the asana instance
+     *
+     * @return {Promise} A promise containing everything marked with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
         return new Promise(function (resolve, reject) {
@@ -30,6 +34,8 @@ module.exports = {
     }
     , /**
      * Returns all of the tasks that unassigned
+     *
+     * @return {Promise} A promise containing only the unassigned requests in Asana
      **/
     getUnassigned: function () {
         return new Promise(function (resolve, reject) {
@@ -40,6 +46,8 @@ module.exports = {
     }
     , /**
      * Returns all of the new requests
+     *
+     * @return {Promise} A promise containing only the new requests in Asana
      **/
     getNewRequests: function () {
         return new Promise(function (resolve, reject) {
