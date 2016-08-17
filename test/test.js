@@ -67,7 +67,7 @@ describe('Querying Asana', function(){
 describe('Working with tags in Asana', function(){
     it('gets all of the unassigned tags', function(){
         this.timeout(8000);
-        return tlsAsana.getTasksByTag(tlsConsts.TAG_CAPTIONING_UNASSIGNED).then(function(list){
+        return tlsAsana.getTasksByTag(tlsAsana.getCachedTagID('captioning_unassigned')).then(function(list){
             assert.ok(list.length > 0); 
         });
     });
@@ -78,18 +78,28 @@ describe('Working with tags in Asana', function(){
             assert.ok(list.length > 0);
         });
     });
+
+    it('requests a cached tag from the tlsAsana library', function(){
+        console.log("cached: " + tlsAsana.getCachedTagID('captioning_unassigned'));
+        return assert.deepEqual(tlsAsana.getCachedTagID('captioning_unassigned'), '167304830178312', 'it worked');
+    });
     
     it('changes a tag from captioning_unassigned to captioning_accepted', function(){
         this.timeout(8000);
-        return tlsAsana.switchTag('166304358745259', '167304830178312', '167304830178315').then(function(tag){
+        return tlsAsana.switchTag('166304358745259', tlsAsana.getCachedTagID('captioning_unassigned'), tlsAsana.getCachedTagID('captioning_accepted')).then(function(tag){
             assert.ok(tag);
         });
     });
     
     it('changes a tag back from captioning_accepted to captioning_unassigned', function(){
         this.timeout(8000);
-        return tlsAsana.switchTag('166304358745259', '167304830178315', '167304830178312').then(function(tag){
+        return tlsAsana.switchTag('166304358745259', tlsAsana.getCachedTagID('captioning_accepted'), tlsAsana.getCachedTagID('captioning_unassigned')).then(function(tag){
             assert.ok(tag);
         });
+    });
+
+    it('looks up an undefined tag and receives undefined back', function(){
+        this.timeout(8000);
+        assert.deepStrictEqual(tlsAsana.getCachedTagID('blahblahblahblah'), undefined, 'It should return undefined but it returns something else');
     });
 });

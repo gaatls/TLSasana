@@ -3,6 +3,7 @@ var asana = require('asana');
 var tlsVars = require('./tlsConstants.js')
 var asanaKey = process.env.ASANAKEY;
 let client = null;
+let tlsTagNames = {};
 
 module.exports = {
     /**
@@ -14,13 +15,36 @@ module.exports = {
     connect: function () {
         try {
             client = asana.Client.create().useAccessToken(asanaKey);
+            if (client) {
+                this.updateTagNames();
+            }
         }
         catch (err) {
             console.log(err);
         }
         return client;
-    }
-    , /**
+    },
+
+    /**
+     * Sets the tlsTagNames variable with the tags currently stored in Asana for quick (cached) reference later.
+     * Sets a property within tlsTagNames that represents whether the variable is okay to use and when it was last
+     * updated
+     *
+     * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
+     */
+    updateTagNames: function() {
+        client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS).then(function(response) {
+            tlsTagNames['variableStatus'] = false;
+            for(let i=0; i<response.data.length; i++) {
+                tlsTagNames[response.data[i].name] = response.data[i].id;
+            }
+            tlsTagNames['variableStatus'] = true;
+            tlsTagNames['lastUpdated'] = Date.now();
+            return true;
+        });
+    },
+
+    /**
      * Gets a list of all of the tasks in the asana instance
      *
      * @return {Promise} A promise containing everything marked with a specific tag in Asana
@@ -31,20 +55,40 @@ module.exports = {
                 resolve(list.data);
             });
         });
-    }
-    , /**
-     * Returns all of the tasks that unassigned
+    },
+
+    /**
+     * Returns all of the tasks that are unassigned
      *
      * @return {Promise} A promise containing only the unassigned requests in Asana
      **/
     getUnassigned: function () {
         return new Promise(function (resolve, reject) {
-            client.tasks.findByTag(tlsVars.TAG_CAPTIONING_UNASSIGNED).then(function (list) {
-                resolve(list.data);
-            });
+            if(tlsTagNames.variableStatus) {
+                client.tasks.findByTag(tlsTagNames.captioning_unassigned).then(function (list) {
+                    resolve(list.data);
+                });
+            }
         });
-    }
-    , /**
+    },
+
+    /**
+     *
+     * @param tagName The name of the tag you are looking up in plain english (the Asana tag name)
+     * @returns {String} the Asana id that represents the tagName you've passed in. Note that this is a cached tag.
+     */
+    getCachedTagID: function(tagName){
+        if(tlsTagNames.variableStatus){
+            if(tlsTagNames[tagName]){
+                return tlsTagNames[tagName];
+            }
+            else{
+                return undefined;
+            }
+        }
+    },
+
+    /**
      * Returns all of the new requests
      *
      * @return {Promise} A promise containing only the new requests in Asana
@@ -55,8 +99,7 @@ module.exports = {
                 resolve(list.data);
             });
         });
-    }
-    , 
+    },
     
     /**
      * Returns information about a specific task
@@ -91,7 +134,6 @@ module.exports = {
     * @param projectID The projectID in which the sections reside
     * @return {Promise} A promise containing the list of all of the sections within a project
     */
-    
     getAllSections: function(projectID){
         return new Promise( function(resolve,reject){
             client.projects.sections(projectID).then( function(sectionList){
@@ -107,7 +149,6 @@ module.exports = {
     * @param newSection The section ID to move the task to
     * @param projectID The project ID the task resides in
     */
-    
     moveTaskToSection: function(taskID, newSection, projectID){
         return new Promise( function(resolve,reject){
             client.tasks.addProject(taskID, {project: projectID, section:newSection}).then(function(taskBack){
@@ -125,7 +166,6 @@ module.exports = {
     * @param newTag the tagID from tlsConstants that you'd like to switch to
     * @return {promise} A promise containing the task information after change
     */
-    
     switchTag: function(taskID, oldTag, newTag){
         return new Promise( function(resolve, reject){
             client.tasks.addTag(taskID, {tag:newTag}).then( function(taskBack){
@@ -135,4 +175,5 @@ module.exports = {
             });
         });
     }
+
 }
