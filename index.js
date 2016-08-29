@@ -2,27 +2,41 @@
 var asana = require('asana');
 var tlsVars = require('./tlsConstants.js')
 var asanaKey = process.env.ASANAKEY;
-let client = null;
+let client = undefined;
 let tlsTagNames = {};
+let projectID = undefined;
+let tlsTasks = {};
 
 module.exports = {
+
+
     /**
      * Always needs to be run first to startup the connection between node and asana.
      * Everything else uses this connection to run.
      *
      * @return {Object} The connection to the Asana server
      **/
-    connect: function () {
-        try {
-            client = asana.Client.create().useAccessToken(asanaKey);
-            if (client) {
-                this.updateTagNames();
+    connect: function (projectID) {
+        let tlsAsana = this;
+
+        return new Promise(function(resolve, reject){
+            try {
+                client = asana.Client.create().useAccessToken(asanaKey);
+                if (client) {
+                    tlsAsana.updateTagNames().then(
+                        tlsAsana.updateTasks(projectID).then(
+                            function(response){
+                                console.log(response);
+                                resolve(true);
+                            }
+                        )
+                    );
+                }
             }
-        }
-        catch (err) {
-            console.log(err);
-        }
-        return client;
+            catch (err) {
+                reject(err);
+            }
+        });
     },
 
     /**
@@ -33,14 +47,29 @@ module.exports = {
      * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
      */
     updateTagNames: function() {
-        client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS).then(function(response) {
-            tlsTagNames['variableStatus'] = false;
-            for(let i=0; i<response.data.length; i++) {
-                tlsTagNames[response.data[i].name] = response.data[i].id;
-            }
-            tlsTagNames['variableStatus'] = true;
-            tlsTagNames['lastUpdated'] = Date.now();
-            return true;
+        return new Promise( function(resolve, reject){
+            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS).then(function(response) {
+                if( response != undefined) {
+                    tlsTagNames['variableStatus'] = false;
+                    for (let i = 0; i < response.data.length; i++) {
+                        tlsTagNames[response.data[i].name] = response.data[i].id;
+                    }
+                    tlsTagNames['variableStatus'] = true;
+                    tlsTagNames['lastUpdated'] = Date.now();
+                    resolve(true);
+                }
+                else{
+                    resolve(false);
+                }
+            });
+        });
+    },
+
+    updateTasks: function(projectID){
+        return new Promise( function(resolve, reject){
+            client.tasks.findByProject(projectID).then(function(response){
+                resolve(response.data);
+            });
         });
     },
 

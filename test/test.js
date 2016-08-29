@@ -3,8 +3,11 @@ var tlsAsana = require('../index.js');
 var tlsConsts = require('../tlsConstants.js')
 
 describe('Connecting to Asana', function(){
-   it('Should return "connected"', function(){
-        return tlsAsana.connect(); 
+   it('Should setup the connection and cache the tag names', function(){
+        this.timeout(8000);
+        return tlsAsana.connect('166216691534199').then(function(response){
+            assert.deepEqual(response,true,'Successful connection and caching achieved');
+        });
    });
 });
 
