@@ -14,17 +14,19 @@ module.exports = {
      * Always needs to be run first to startup the connection between node and asana.
      * Everything else uses this connection to run.
      *
+     * @param {String} requestedProjectID The id of the project that all other functions will refer to
      * @return {Object} The connection to the Asana server
      **/
-    connect: function (projectID) {
+    connect: function (requestedProjectID) {
         let tlsAsana = this;
+        projectID = requestedProjectID;
 
         return new Promise(function(resolve, reject){
             try {
                 client = asana.Client.create().useAccessToken(asanaKey);
                 if (client) {
                     tlsAsana.updateTagNames().then(
-                        tlsAsana.updateTasks(projectID).then(
+                        tlsAsana.updateTasks().then(
                             function(response){
                                 console.log(response);
                                 resolve(true);
@@ -65,7 +67,7 @@ module.exports = {
         });
     },
 
-    updateTasks: function(projectID){
+    updateTasks: function(){
         return new Promise( function(resolve, reject){
             client.tasks.findByProject(projectID).then(function(response){
                 resolve(response.data);
@@ -160,10 +162,9 @@ module.exports = {
     /**
     * Returns a list of all of the sections currently within a project
     *
-    * @param projectID The projectID in which the sections reside
     * @return {Promise} A promise containing the list of all of the sections within a project
     */
-    getAllSections: function(projectID){
+    getAllSections: function(){
         return new Promise( function(resolve,reject){
             client.projects.sections(projectID).then( function(sectionList){
                 resolve(sectionList.data); 
@@ -176,9 +177,8 @@ module.exports = {
     * 
     * @param taskID The task to be moved
     * @param newSection The section ID to move the task to
-    * @param projectID The project ID the task resides in
     */
-    moveTaskToSection: function(taskID, newSection, projectID){
+    moveTaskToSection: function(taskID, newSection){
         return new Promise( function(resolve,reject){
             client.tasks.addProject(taskID, {project: projectID, section:newSection}).then(function(taskBack){
                 resolve(taskBack);
