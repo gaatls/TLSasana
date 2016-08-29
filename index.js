@@ -28,7 +28,7 @@ module.exports = {
                     tlsAsana.updateTagNames().then(
                         tlsAsana.updateTasks().then(
                             function(response){
-                                console.log(response);
+                                //console.log(response);
                                 resolve(true);
                             }
                         )
@@ -48,10 +48,16 @@ module.exports = {
      *
      * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
      */
-    updateTagNames: function() {
+    updateTagNames: function(findByWorkspaceParams) {
         return new Promise( function(resolve, reject){
             client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS).then(function(response) {
                 if( response != undefined) {
+
+                    //hayden..if there are more pages lets call this function
+                    if(response.next_page){
+                        combinePaginatedTagNames(response);
+                    }
+
                     tlsTagNames['variableStatus'] = false;
                     for (let i = 0; i < response.data.length; i++) {
                         tlsTagNames[response.data[i].name] = response.data[i].id;
@@ -65,6 +71,29 @@ module.exports = {
                 }
             });
         });
+    },
+
+    /**
+     * Tried to write something that will keep concatonating the data arrays of the responses (to return one large array of tagNames)
+     * --didn't have time to test before going to class...it is not working, but I think I can fix it tomorrow--or this is really stupid idk
+     * 
+     * Should take the last reponses' offset value and get the next response, then check for another offset value...I think I messed up some promise 
+     * resolve/recursion thing.
+     */
+    combinePaginatedTagNames: function(previousResponse){
+        var offsetHash = previousResponse.next_page.offset;
+        
+        return new Promise( function(resolve, reject){
+            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {offset: offsetHash}).then(function(response) {
+                if(response.next_page){
+                    combinePaginatedTagNames(response);
+                }
+
+                resolve(previousResponse.data.concat(response.data));
+            });
+        });
+
+
     },
 
     updateTasks: function(){
