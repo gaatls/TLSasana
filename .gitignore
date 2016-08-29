@@ -36,5 +36,8 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 
-#Bash files that keep track of the asana keys
+# Bash files that keep track of the asana keys
 runTests.sh
+
+# Visual Studio files that could contain asana keys
+.vscode
