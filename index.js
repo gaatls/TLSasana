@@ -9,7 +9,8 @@ let tlsTasks = {};
 const tagLimit = 50;
 
 //used to show how page concatonation function works, not necessary
-let tagPages = 1;
+//but commenting out bc trying to use next page function for both tags and tasks
+//let tagPages = 1;
 
 module.exports = {
 
@@ -60,12 +61,11 @@ module.exports = {
                 if( response != undefined) {
                     //hayden..if there are more pages of tag data lets call this function
                     if(response._response.next_page){
-                        let originalResponse = response;
-
-                        tlsAsana.combinePaginatedTagNames(originalResponse).then(function(response){
-                            console.log('-------- final tag response ----------');
-                            console.log(response);
+                        tlsAsana.combinePaginatedData(response).then(function(response){
+                            //the reponse from combinePaginatedData is the actual data and can 
+                            //be directly passed to the updateTlsTagCache function
                             updateTlsTagCache(response);
+                            resolve(true);
                         });
                     }
                     else {
@@ -74,7 +74,7 @@ module.exports = {
                     }
 
                     function updateTlsTagCache(fullTagData){
-                        console.log('Currently ' + fullTagData.length + ' tags in this project on ' + tagPages + ' pages.');
+                        //console.log('Currently ' + fullTagData.length + ' tags in this project on ' + tagPages + ' pages.');
                         tlsTagNames['variableStatus'] = false;
                         for (let i = 0; i < fullTagData.length; i++) {
                             tlsTagNames[fullTagData[i].name] = fullTagData[i].id;
@@ -90,40 +90,76 @@ module.exports = {
         });
     },
 
+
+
+    updateTasks: function(){
+        let tlsAsana = this;
+        
+        return new Promise( function(resolve, reject){
+            client.tasks.findByProject(projectID).then(function(response){
+                if(response != undefined){
+                    //hayden..if there are more pages of task data lets call this function
+                    if(response._response.next_page){
+                        tlsAsana.combinePaginatedData(response).then(function(response){
+                            //the reponse from combinePaginatedData is the actual data and can 
+                            //be directly passed to the updateTlsTaskCache function
+                            updateTlsTaskCache(response);
+                            resolve(true);
+                        });
+                    }
+                    else {
+                        updateTlsTaskCache(response.data);
+                        resolve(true);
+                    }
+                }
+                else{
+                    resolve(false);
+                }
+
+                function updateTlsTaskCache(fullTaskData){
+                    console.log('--- full task data ---');
+                    console.log(fullTaskData);
+                }
+            });
+        });
+    },
+
+
+
+
     /**
      * Concatonates data arrays -- for now it is the tag names and ids, but I think I can use it for
      * tasks as well. Will change the name if I can use it for tasks also.
+     * 
+     * @param {Object} previousResponse Full Asana response that was paginated
+     * @return {Promise} An array of data objects 
      */
-    combinePaginatedTagNames: function(previousResponse){
+    combinePaginatedData: function(previousResponse){
         let tlsAsana = this;
         let offsetHash = previousResponse._response.next_page.offset;
-        tagPages++;
+        
+        //useful for showing how the combinePaginatedData function works, but not necessary..will be removed
+        //trying to combine with tasks so commented out for now
+        //tagPages++;
+        
         return new Promise( function(resolve, reject){
             client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: tagLimit, offset: offsetHash}).then(function(response){
                 if(response._response.next_page){
-                    tlsAsana.combinePaginatedTagNames(response).then(function(response){
+                    tlsAsana.combinePaginatedData(response).then(function(response){
                         //combine the previous page's data with the current page
                         let combinedTagData = previousResponse.data.concat(response);
                         resolve(combinedTagData);
                     });
                 }else{
-                    //combine the all paginated data with previous page's data
+                    //combine last page of data with the previous pages' data
                     let combinedTagData = previousResponse.data.concat(response.data);
                     resolve(combinedTagData);
                 }
             });
         });
-
-
     },
 
-    updateTasks: function(){
-        return new Promise( function(resolve, reject){
-            client.tasks.findByProject(projectID).then(function(response){
-                resolve(response.data);
-            });
-        });
-    },
+
 
     /**
      * Gets a list of all of the tasks in the asana instance
