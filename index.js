@@ -6,6 +6,10 @@ let client = undefined;
 let tlsTagNames = {};
 let projectID = undefined;
 let tlsTasks = {};
+const tagLimit = 50;
+
+//used to show how page concatonation function works, not necessary
+let tagPages = 1;
 
 module.exports = {
 
@@ -49,22 +53,35 @@ module.exports = {
      * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
      */
     updateTagNames: function(findByWorkspaceParams) {
+        let tlsAsana = this;
+
         return new Promise( function(resolve, reject){
-            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS).then(function(response) {
+            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: tagLimit}).then(function(response) {
                 if( response != undefined) {
+                    //hayden..if there are more pages of tag data lets call this function
+                    if(response._response.next_page){
+                        let originalResponse = response;
 
-                    //hayden..if there are more pages lets call this function
-                    if(response.next_page){
-                        combinePaginatedTagNames(response);
+                        tlsAsana.combinePaginatedTagNames(originalResponse).then(function(response){
+                            console.log('-------- final tag response ----------');
+                            console.log(response);
+                            updateTlsTagCache(response);
+                        });
+                    }
+                    else {
+                        updateTlsTagCache(response.data);
+                        resolve(true);
                     }
 
-                    tlsTagNames['variableStatus'] = false;
-                    for (let i = 0; i < response.data.length; i++) {
-                        tlsTagNames[response.data[i].name] = response.data[i].id;
+                    function updateTlsTagCache(fullTagData){
+                        console.log('Currently ' + fullTagData.length + ' tags in this project on ' + tagPages + ' pages.');
+                        tlsTagNames['variableStatus'] = false;
+                        for (let i = 0; i < fullTagData.length; i++) {
+                            tlsTagNames[fullTagData[i].name] = fullTagData[i].id;
+                        }
+                        tlsTagNames['variableStatus'] = true;
+                        tlsTagNames['lastUpdated'] = Date.now();
                     }
-                    tlsTagNames['variableStatus'] = true;
-                    tlsTagNames['lastUpdated'] = Date.now();
-                    resolve(true);
                 }
                 else{
                     resolve(false);
@@ -74,22 +91,26 @@ module.exports = {
     },
 
     /**
-     * Tried to write something that will keep concatonating the data arrays of the responses (to return one large array of tagNames)
-     * --didn't have time to test before going to class...it is not working, but I think I can fix it tomorrow--or this is really stupid idk
-     * 
-     * Should take the last reponses' offset value and get the next response, then check for another offset value...I think I messed up some promise 
-     * resolve/recursion thing.
+     * Concatonates data arrays -- for now it is the tag names and ids, but I think I can use it for
+     * tasks as well. Will change the name if I can use it for tasks also.
      */
     combinePaginatedTagNames: function(previousResponse){
-        var offsetHash = previousResponse.next_page.offset;
-        
+        let tlsAsana = this;
+        let offsetHash = previousResponse._response.next_page.offset;
+        tagPages++;
         return new Promise( function(resolve, reject){
-            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {offset: offsetHash}).then(function(response) {
-                if(response.next_page){
-                    combinePaginatedTagNames(response);
+            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: tagLimit, offset: offsetHash}).then(function(response){
+                if(response._response.next_page){
+                    tlsAsana.combinePaginatedTagNames(response).then(function(response){
+                        //combine the previous page's data with the current page
+                        let combinedTagData = previousResponse.data.concat(response);
+                        resolve(combinedTagData);
+                    });
+                }else{
+                    //combine the all paginated data with previous page's data
+                    let combinedTagData = previousResponse.data.concat(response.data);
+                    resolve(combinedTagData);
                 }
-
-                resolve(previousResponse.data.concat(response.data));
             });
         });
 
