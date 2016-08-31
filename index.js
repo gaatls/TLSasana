@@ -6,11 +6,21 @@ let client = undefined;
 let tlsTagNames = {};
 let projectID = undefined;
 let tlsTasks = {};
-const tagLimit = 50;
+const pageLimit = 100;
 
-//used to show how page concatonation function works, not necessary
-//but commenting out bc trying to use next page function for both tags and tasks
-//let tagPages = 1;
+//stores the static info associated with the tag and task
+//requests so that we don't have to pass a million parameters
+//when there are multiple pages of data
+let requestType = {
+    tags: {
+        apiFunction: 'findByWorkspace', 
+        identifier: tlsVars.WORKSPACE_TLS
+    },
+    tasks: {
+        apiFunction: 'findByProject',
+        identifier: projectID
+    }
+}
 
 module.exports = {
 
@@ -57,11 +67,11 @@ module.exports = {
         let tlsAsana = this;
 
         return new Promise( function(resolve, reject){
-            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: tagLimit}).then(function(response) {
+            client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: pageLimit}).then(function(response) {
                 if( response != undefined) {
                     //hayden..if there are more pages of tag data lets call this function
                     if(response._response.next_page){
-                        tlsAsana.combinePaginatedData('findByWorkspace', tlsVars.WORKSPACE_TLS, response).then(function(response){
+                        tlsAsana.combinePaginatedData('tags', response).then(function(response){
                             //the reponse from combinePaginatedData is the actual data and can 
                             //be directly passed to the updateTlsTagCache function
                             updateTlsTagCache(response);
@@ -74,7 +84,6 @@ module.exports = {
                     }
 
                     function updateTlsTagCache(fullTagData){
-                        //console.log('Currently ' + fullTagData.length + ' tags in this project on ' + tagPages + ' pages.');
                         tlsTagNames['variableStatus'] = false;
                         for (let i = 0; i < fullTagData.length; i++) {
                             tlsTagNames[fullTagData[i].name] = fullTagData[i].id;
@@ -96,11 +105,11 @@ module.exports = {
         let tlsAsana = this;
         
         return new Promise( function(resolve, reject){
-            client.tasks.findByProject(projectID).then(function(response){
+            client.tasks.findByProject(projectID, {limit: pageLimit}).then(function(response){
                 if(response != undefined){
                     //hayden..if there are more pages of task data lets call this function
                     if(response._response.next_page){
-                        tlsAsana.combinePaginatedData('findByProject', projectID, response).then(function(response){
+                        tlsAsana.combinePaginatedData('tasks', response).then(function(response){
                             //the reponse from combinePaginatedData is the actual data and can 
                             //be directly passed to the updateTlsTaskCache function
                             updateTlsTaskCache(response);
@@ -117,8 +126,12 @@ module.exports = {
                 }
 
                 function updateTlsTaskCache(fullTaskData){
-                    console.log('--- full task data ---');
-                    console.log(fullTaskData);
+                    tlsTasks['variableStatus'] = false;
+                    for (let i = 0; i < fullTaskData.length; i++) {
+                        tlsTasks[fullTaskData[i].name] = fullTaskData[i].id;
+                    }
+                    tlsTasks['variableStatus'] = true;
+                    tlsTasks['lastUpdated'] = Date.now();
                 }
             });
         });
@@ -131,23 +144,24 @@ module.exports = {
      * Concatonates data arrays -- for now it is the tag names and ids, but I think I can use it for
      * tasks as well. Will change the name if I can use it for tasks also.
      * 
-     * @param {String} apiFunction Name of Asana API function needed to get paginated data
-     * @param {String} identifier ProjectId or WorkspaceId that is passed as a paramater to the apiFunction
+     * @param {String} type Request type from Asana API (currently tags or tasks)
      * @param {Object} previousResponse Full Asana response that was paginated
      * @return {Promise} An array of data objects 
      */
-    combinePaginatedData: function(apiFunction, identifier, previousResponse){
+    combinePaginatedData: function(type, previousResponse){
         let tlsAsana = this;
         let offsetHash = previousResponse._response.next_page.offset;
+
+        //Asana API function needed to get paginated data
+        let apiFunction = requestType[type].apiFunction;
         
-        //useful for showing how the combinePaginatedData function works, but not necessary..will be removed
-        //trying to combine with tasks so commented out for now
-        //tagPages++;
+        //Name of id used with Asana API function (workspaceId or projectId currently)
+        let identifier = requestType[type].identifier;
         
         return new Promise( function(resolve, reject){
-            client.tags[apiFunction](identifier, {limit: tagLimit, offset: offsetHash}).then(function(response){
+            client[type][apiFunction](identifier, {limit: pageLimit, offset: offsetHash}).then(function(response){
                 if(response._response.next_page){
-                    tlsAsana.combinePaginatedData(apiFunction, identifier, response).then(function(response){
+                    tlsAsana.combinePaginatedData(type, response).then(function(response){
                         //combine the previous page's data with the current page
                         let combinedTagData = previousResponse.data.concat(response);
                         resolve(combinedTagData);
