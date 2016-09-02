@@ -1,24 +1,58 @@
+"use strict";
 var assert = require('assert');
 var tlsAsana = require('../index.js');
 var tlsConsts = require('../tlsConstants.js')
 
 describe('Connecting to Asana', function(){
-   it('Should setup the connection and cache the tag names', function(){
+   it('Should setup the connection', function(){
         this.timeout(8000);
         return tlsAsana.connect('166216691534199').then(function(response){
-            assert.deepEqual(response,true,'Successful connection and caching achieved');
+            assert.deepEqual(response,true,'Successful connection');
         });
    });
 });
 
+describe('Updating the caches', function(){
+    it('Should update the tag cache', function(){
+        this.timeout(8000);
+        return tlsAsana.updateTagNames(10).then(function(response){
+            assert.equal(response.Accepted,167304830178303,'Tag cache updated successfully');
+        })
+    });
+
+    it('Should update the task cache', function(){
+        this.timeout(8000);
+        return tlsAsana.updateTasks().then(function(response){
+            assert.equal(response.data[0].id,173632881940301,'Task cache updated successfully');
+        })
+    });
+
+    let tlsTasks;
+    
+    it('Should get tags associated with a task when the tasks are cached', function(){
+        this.timeout(8000);
+        return tlsAsana.updateTasks().then(function(response){
+            assert.equal(response.data[0].tags[0].name,"Captioning",'Successfully got tags associated with tasks');
+            
+            tlsTasks = response;
+        })
+    })
+
+    it('Should update the local task cache if older than set refresh time', function(){
+        assert(tlsAsana.checkLastCacheUpdate(tlsTasks, tlsAsana.updateTasks, 0), "Task cache was updated");
+    })
+
+
+});
+
 describe('Querying Asana', function(){
     
-    it('gets all of the new tasks in Asana', function(){
-        this.timeout(8000);
-        return tlsAsana.getNewRequests().then(function(list){
-            assert.ok(list.length > 0); 
-        });
-    });
+    // it('gets all of the new tasks in Asana', function(){
+    //     this.timeout(8000);
+    //     return tlsAsana.getNewRequests().then(function(list){
+    //         assert.ok(list.length > 0); 
+    //     });
+    // });
     
     it('gets information about a specific task from asana', function(){
         this.timeout(8000);
@@ -83,7 +117,7 @@ describe('Working with tags in Asana', function(){
     });
 
     it('requests a cached tag from the tlsAsana library', function(){
-        console.log("cached: " + tlsAsana.getCachedTagID('captioning_unassigned'));
+        console.log("      Cached: " + tlsAsana.getCachedTagID('captioning_unassigned'));
         return assert.deepEqual(tlsAsana.getCachedTagID('captioning_unassigned'), '167304830178312', 'it worked');
     });
     

@@ -1,17 +1,25 @@
 "use strict";
+//for when we bring in lodas..got to put in package.json and install first
+//var _ = require('lodash');
+
 var asana = require('asana');
 var tlsVars = require('./tlsConstants.js')
 var asanaKey = process.env.ASANAKEY;
 let client = undefined;
-let tlsTagNames = {};
 let projectID = undefined;
-let tlsTasks = {};
-const pageLimit = 100;
+let tlsTagNames = {
+    refreshTime: 120000
+};
+let tlsTasks = {
+    data: [],
+    refreshTime: 30000
+};
+let pageLimit = 100;
 
 //stores the static info associated with the tag and task
 //requests so that we don't have to pass a million parameters
 //when there are multiple pages of data
-let requestType = {
+let asanaRequestDetails = {
     tags: {
         apiFunction: 'findByWorkspace', 
         identifier: tlsVars.WORKSPACE_TLS
@@ -48,6 +56,7 @@ module.exports = {
                             }
                         )
                     );
+                    resolve(true);
                 }
             }
             catch (err) {
@@ -63,7 +72,7 @@ module.exports = {
      *
      * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
      */
-    updateTagNames: function(findByWorkspaceParams) {
+    updateTagNames: function() {
         let tlsAsana = this;
 
         return new Promise( function(resolve, reject){
@@ -80,20 +89,20 @@ module.exports = {
                     }
                     else {
                         updateTlsTagCache(response.data);
-                        resolve(true);
-                    }
-
-                    function updateTlsTagCache(fullTagData){
-                        tlsTagNames['variableStatus'] = false;
-                        for (let i = 0; i < fullTagData.length; i++) {
-                            tlsTagNames[fullTagData[i].name] = fullTagData[i].id;
-                        }
-                        tlsTagNames['variableStatus'] = true;
-                        tlsTagNames['lastUpdated'] = Date.now();
+                        resolve(tlsTagNames);
                     }
                 }
                 else{
                     resolve(false);
+                }
+
+                function updateTlsTagCache(fullTagData){
+                    tlsTagNames['variableStatus'] = false;
+                    for (let i = 0; i < fullTagData.length; i++) {
+                        tlsTagNames[fullTagData[i].name] = fullTagData[i].id;
+                    }
+                    tlsTagNames['variableStatus'] = true;
+                    tlsTagNames['lastUpdated'] = Date.now();
                 }
             });
         });
@@ -105,7 +114,7 @@ module.exports = {
         let tlsAsana = this;
         
         return new Promise( function(resolve, reject){
-            client.tasks.findByProject(projectID, {limit: pageLimit}).then(function(response){
+            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,tags.name,tags.color'}).then(function(response){
                 if(response != undefined){
                     //hayden..if there are more pages of task data lets call this function
                     if(response._response.next_page){
@@ -113,12 +122,12 @@ module.exports = {
                             //the reponse from combinePaginatedData is the actual data and can 
                             //be directly passed to the updateTlsTaskCache function
                             updateTlsTaskCache(response);
-                            resolve(true);
+                            resolve(tlsTasks);
                         });
                     }
                     else {
                         updateTlsTaskCache(response.data);
-                        resolve(true);
+                        resolve(tlsTasks);
                     }
                 }
                 else{
@@ -128,7 +137,7 @@ module.exports = {
                 function updateTlsTaskCache(fullTaskData){
                     tlsTasks['variableStatus'] = false;
                     for (let i = 0; i < fullTaskData.length; i++) {
-                        tlsTasks[fullTaskData[i].name] = fullTaskData[i].id;
+                        tlsTasks.data.push(fullTaskData[i]);
                     }
                     tlsTasks['variableStatus'] = true;
                     tlsTasks['lastUpdated'] = Date.now();
@@ -136,8 +145,6 @@ module.exports = {
             });
         });
     },
-
-
 
 
     /**
@@ -153,10 +160,10 @@ module.exports = {
         let offsetHash = previousResponse._response.next_page.offset;
 
         //Asana API function needed to get paginated data
-        let apiFunction = requestType[type].apiFunction;
+        let apiFunction = asanaRequestDetails[type].apiFunction;
         
         //Name of id used with Asana API function (workspaceId or projectId currently)
-        let identifier = requestType[type].identifier;
+        let identifier = asanaRequestDetails[type].identifier;
         
         return new Promise( function(resolve, reject){
             client[type][apiFunction](identifier, {limit: pageLimit, offset: offsetHash}).then(function(response){
@@ -176,6 +183,29 @@ module.exports = {
     },
 
 
+    /**
+     * Checks when a cache was last updated and sees if it needs to be refreshed
+     * 
+     * @param {Object} cache Local cache that may need to be updated
+     * @param {Function} updateFunc Name of the function that will be called if update is necessary
+     * @param {Number} refreshOverride Overrides set refresh value, using to test with a 0 refresh value so function always refreshes the cache
+     * @return {Bool} True if cache needed to be updated, otherwise false (hayden...using for testing, may not need)
+     */
+    checkLastCacheUpdate: function(cache, updateFunc, refreshOverride){
+        //this is crazy, but I put in so I could test this cache update function...will change next week
+        if(Number.isInteger(refreshOverride) && refreshOverride != undefined) cache.refreshTime = refreshOverride;
+
+        if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
+            console.log('      Cache needs to be refreshed');
+            updateFunc();
+            return true;
+        }
+        else {
+            console.log("      Cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
+            return false;
+        }
+    },
+
 
     /**
      * Gets a list of all of the tasks in the asana instance
@@ -190,12 +220,19 @@ module.exports = {
         });
     },
 
+
+
+
+
     /**
      * Returns all of the tasks that are unassigned
      *
      * @return {Promise} A promise containing only the unassigned requests in Asana
      **/
     getUnassigned: function () {
+        //sample of checking for local cache age ...will need to do in more places and maybe differently next week
+        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
+
         return new Promise(function (resolve, reject) {
             if(tlsTagNames.variableStatus) {
                 client.tasks.findByTag(tlsTagNames.captioning_unassigned).then(function (list) {
