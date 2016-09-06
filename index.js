@@ -136,6 +136,7 @@ module.exports = {
                 function updateTlsTaskCache(fullTaskData){
                     tlsTasks['variableStatus'] = false;
 
+                    tlsTasks.data = [];
                     _.forEach(fullTaskData, function(value, key){
                         tlsTasks.data.push(value);
                     });
@@ -214,11 +215,24 @@ module.exports = {
      * @return {Promise} A promise containing everything marked with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        return new Promise(function (resolve, reject) {
-            client.tasks.findByTag(tag).then(function (list) {
-                resolve(list.data);
-            });
-        });
+        let idType;
+        
+        if( !_.isNumber(tag) && !_.isString(tag)){
+            throw 'Error, parameter is not a tag id number or a tag name string';
+        }
+        else if( _.isNumber(tag) && _.includes(tlsTagNames, tag) ){
+            idType = 'id';
+        }
+        else if( _.isString(tag) && _.has(tlsTagNames, tag) ){
+            idType = 'name';
+        }
+        else {
+            throw 'Error, passed parameter is not a tag id or name';
+        }
+
+        return _.filter(tlsTasks.data, function(x){
+            return _.find(x.tags, {[idType]: tag});
+        })
     },
 
 

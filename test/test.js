@@ -104,9 +104,10 @@ describe('Querying Asana', function(){
 describe('Working with tags in Asana', function(){
     it('gets all of the unassigned tags', function(){
         this.timeout(8000);
-        return tlsAsana.getTasksByTag(tlsAsana.getCachedTagID('captioning_unassigned')).then(function(list){
-            assert.ok(list.length > 0); 
-        });
+        // return tlsAsana.getTasksByTag(167304830178312).then(function(list){
+        //     assert.ok(list.length > 0); 
+        // });
+        assert.ok(tlsAsana.getTasksByTag(167304830178312).length > 0);
     });
     
     it('gets all of the unassigned captioning tags in Asana', function(){
