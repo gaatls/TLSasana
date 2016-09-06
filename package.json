@@ -24,6 +24,7 @@
     "asana": "^0.14.1"
   },
   "devDependencies": {
+    "lodash": "^4.15.0",
     "mocha": "^2.5.3"
   }
 }

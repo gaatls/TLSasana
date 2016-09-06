@@ -1,6 +1,7 @@
 "use strict";
 //for when we bring in lodas..got to put in package.json and install first
-//var _ = require('lodash');
+var _ = require('lodash');
+
 
 var asana = require('asana');
 var tlsVars = require('./tlsConstants.js')
@@ -78,11 +79,9 @@ module.exports = {
         return new Promise( function(resolve, reject){
             client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: pageLimit}).then(function(response) {
                 if( response != undefined) {
-                    //hayden..if there are more pages of tag data lets call this function
+                    //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
                         tlsAsana.combinePaginatedData('tags', response).then(function(response){
-                            //the reponse from combinePaginatedData is the actual data and can 
-                            //be directly passed to the updateTlsTagCache function
                             updateTlsTagCache(response);
                             resolve(true);
                         });
@@ -98,9 +97,11 @@ module.exports = {
 
                 function updateTlsTagCache(fullTagData){
                     tlsTagNames['variableStatus'] = false;
-                    for (let i = 0; i < fullTagData.length; i++) {
-                        tlsTagNames[fullTagData[i].name] = fullTagData[i].id;
-                    }
+
+                    _.forEach(fullTagData, function(value, key){
+                        tlsTagNames[value.name] = value.id;
+                    });
+
                     tlsTagNames['variableStatus'] = true;
                     tlsTagNames['lastUpdated'] = Date.now();
                 }
@@ -116,11 +117,9 @@ module.exports = {
         return new Promise( function(resolve, reject){
             client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,tags.name,tags.color'}).then(function(response){
                 if(response != undefined){
-                    //hayden..if there are more pages of task data lets call this function
+                    //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
                         tlsAsana.combinePaginatedData('tasks', response).then(function(response){
-                            //the reponse from combinePaginatedData is the actual data and can 
-                            //be directly passed to the updateTlsTaskCache function
                             updateTlsTaskCache(response);
                             resolve(tlsTasks);
                         });
@@ -136,9 +135,11 @@ module.exports = {
 
                 function updateTlsTaskCache(fullTaskData){
                     tlsTasks['variableStatus'] = false;
-                    for (let i = 0; i < fullTaskData.length; i++) {
-                        tlsTasks.data.push(fullTaskData[i]);
-                    }
+
+                    _.forEach(fullTaskData, function(value, key){
+                        tlsTasks.data.push(value);
+                    });
+
                     tlsTasks['variableStatus'] = true;
                     tlsTasks['lastUpdated'] = Date.now();
                 }
