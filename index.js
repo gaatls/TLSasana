@@ -216,7 +216,7 @@ module.exports = {
      * @return {Promise} A promise containing everything marked with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        if( !_.isNumber(tag) || _.includes(tlsTagNames, tag)) throw 'Error, parameter is not a number or not an existing tag id number';
+        if( !_.isNumber(tag) || !_.includes(tlsTagNames, tag)) throw 'Error, parameter is not a number or not an existing tag id number';
 
         return _.filter(tlsTasks.data, function(x){
             return _.find(x.tags, {'id': tag});
