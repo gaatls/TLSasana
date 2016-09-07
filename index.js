@@ -215,6 +215,27 @@ module.exports = {
         }
     },
 
+
+    /**
+     * Simplifies the tag cache check function call because it is repeated frequently
+     */
+    checkTagCache: function(){
+        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
+    },
+
+
+    /**
+     * Simplifies the task cache check function call because it is repeated frequently
+     */
+    checkTaskCache: function(){
+        this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
+    },
+
+
+    /**
+     * Simplifies the call to both the tag and task cache check function calls because 
+     * they are repeated frequently
+     */
     checkBothCaches: function(){
         this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
         this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
@@ -229,7 +250,7 @@ module.exports = {
      * @return {Array} Array containing all task objects with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        this.checkLastCacheUpdate(tlsTasks, this.updateTasks());
+        this.checkTaskCache();
 
         return _.filter(tlsTasks.data, function(x){
             return _.find(x.tags, {'id': tag});
@@ -255,7 +276,7 @@ module.exports = {
      * @returns {String} the Asana id that represents the tagName you've passed in. Note that this is a cached tag.
      */
     getTagIDByName: function(tagName){
-        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames());
+        this.checkTagCache();
 
         if(tlsTagNames.variableStatus){
             if(tlsTagNames[tagName]){
@@ -266,6 +287,21 @@ module.exports = {
             }
         }
     },
+
+    /**
+     * Checks the task cache age and returns information about a specific task
+     *
+     * @param taskID - the id of the cached task we are interested in
+     * @return {Object} Information about a specific task in the task cache
+     **/
+    getTaskInfo: function (taskID) {
+        this.checkTaskCache();
+
+        return _.find(tlsTasks.data, function(x){
+            return x.id == taskID;
+        })
+    },
+
 
     /**
      * Returns all of the new requests
@@ -280,19 +316,6 @@ module.exports = {
         });
     },
     
-    /**
-     * Checks the task cache age and returns information about a specific task
-     *
-     * @param taskID - the id of the cached task we are interested in
-     * @return {Object} Information about a specific task in the task cache
-     **/
-    getTaskInfo: function (taskID) {
-        this.checkLastCacheUpdate(tlsTasks, this.updateTasks());
-
-        return _.find(tlsTasks.data, function(x){
-            return x.id == taskID;
-        })
-    },
     
     /**
     * Returns a list of all of the projects currently in Asana
