@@ -12,7 +12,7 @@ describe('Connecting to Asana', function(){
    });
 });
 
-describe('Updating the caches', function(){
+describe('Working with caches', function(){
     it('Should update the tag cache', function(){
         this.timeout(8000);
         return tlsAsana.updateTagNames(10).then(function(response){
@@ -35,9 +35,8 @@ describe('Updating the caches', function(){
         assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Successfully got tags associated with tasks');
     })
 
-    it('Should update the local task cache if older than set refresh time', function(){
-        if(!tlsTasks) throw "Error, can't reupdate cache if first update was not successful";
-        assert(tlsAsana.checkLastCacheUpdate(tlsTasks, tlsAsana.updateTasks, 0), "Task cache was updated");
+    it('Should update a local cache if older than its set refresh time', function(){
+        assert(tlsAsana.checkLastCacheUpdate(tlsAsana.testCache, tlsAsana.testCache.testRefresh), "Task cache was updated");
     })
 
 
@@ -102,10 +101,11 @@ describe('Working with tags in Asana', function(){
     });
     
     it('gets all of the unassigned captioning tags in Asana', function(){
-        this.timeout(8000);
-        return tlsAsana.getUnassigned().then(function(list){
-            assert.ok(list.length > 0);
-        });
+        //this.timeout(8000);
+        assert.ok(tlsAsana.getUnassigned().length > 0);
+        // return tlsAsana.getUnassigned().then(function(list){
+        //     assert.ok(list.length > 0);
+        // });
     });
 
     it('requests a cached tag from the tlsAsana library', function(){

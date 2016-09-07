@@ -9,12 +9,15 @@ var asanaKey = process.env.ASANAKEY;
 let client = undefined;
 let projectID = undefined;
 let tlsTagNames = {
+    name: 'tlsTagNames',
     refreshTime: 120000
 };
 let tlsTasks = {
+    name: 'tlsTasks',
     data: [],
     refreshTime: 30000
 };
+
 let pageLimit = 100;
 
 //stores the static info associated with the tag and task
@@ -33,6 +36,14 @@ let asanaRequestDetails = {
 
 module.exports = {
 
+    testCache: {
+        name: 'testCache',
+        lastUpdated: Date.now(),
+        refreshTime: 0,
+        testRefresh: function(){
+            return;
+        }
+    },
 
     /**
      * Always needs to be run first to startup the connection between node and asana.
@@ -190,22 +201,25 @@ module.exports = {
      * 
      * @param {Object} cache Local cache that may need to be updated
      * @param {Function} updateFunc Name of the function that will be called if update is necessary
-     * @param {Number} refreshOverride Overrides set refresh value, using to test with a 0 refresh value so function always refreshes the cache
      * @return {Bool} True if cache needed to be updated, otherwise false (hayden...using for testing, may not need)
      */
-    checkLastCacheUpdate: function(cache, updateFunc, refreshOverride){
-        //this is crazy, but I put in so I could test this cache update function...will change next week
-        if(Number.isInteger(refreshOverride) && refreshOverride != undefined) cache.refreshTime = refreshOverride;
-
+    checkLastCacheUpdate: function(cache, updateFunc){
         if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            console.log('      Cache needs to be refreshed');
+            console.log('      ' + cache.name + ' cache needs to be refreshed');
             updateFunc();
             return true;
         }
         else {
-            console.log("      Cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
+            console.log('      ' + cache.name + " cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
             return false;
         }
+    },
+
+
+    checkBothCaches: function(){
+        let tlsAsana = this;
+        tlsAsana.checkLastCacheUpdate(tlsTagNames, tlsAsana.updateTagNames);
+        tlsAsana.checkLastCacheUpdate(tlsTasks, tlsAsana.updateTasks);
     },
 
 
@@ -228,21 +242,15 @@ module.exports = {
 
 
     /**
-     * Returns all of the tasks that are unassigned
+     * Check the tag and task cache ages and then returns all of the tasks that are unassigned
      *
-     * @return {Promise} A promise containing only the unassigned requests in Asana
+     * @return {Object} An object containing only the unassigned requests in Asana
      **/
     getUnassigned: function () {
-        //sample of checking for local cache age ...will need to do in more places and maybe differently next week
-        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
+        this.checkBothCaches();
+        let id = tlsTagNames.captioning_unassigned;
 
-        return new Promise(function (resolve, reject) {
-            if(tlsTagNames.variableStatus) {
-                client.tasks.findByTag(tlsTagNames.captioning_unassigned).then(function (list) {
-                    resolve(list.data);
-                });
-            }
-        });
+        return this.getTasksByTag(id);
     },
 
     /**
@@ -277,16 +285,10 @@ module.exports = {
     /**
      * Returns information about a specific task
      *
-     * @param taskID - the id in asana of the task we are interested in
-     * @return {Promise} A promise containing information about a specific task in Asana
+     * @param taskID - the id of the cached task we are interested in
+     * @return {Object} Information about a specific task in the task cache
      **/
     getTaskInfo: function (taskID) {
-        // return new Promise(function (resolve, reject) {
-        //     client.tasks.findById(taskID).then(function(task){
-        //         resolve(task);
-        //     });
-        // });
-
         return _.find(tlsTasks.data, function(x){
             return x.id == taskID;
         })
