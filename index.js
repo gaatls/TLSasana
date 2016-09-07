@@ -115,7 +115,7 @@ module.exports = {
         let tlsAsana = this;
         
         return new Promise( function(resolve, reject){
-            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,tags.name,tags.color'}).then(function(response){
+            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,created_at,tags.name,tags.color'}).then(function(response){
                 if(response != undefined){
                     //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
@@ -210,28 +210,16 @@ module.exports = {
 
 
     /**
-     * Gets a list of all of the tasks in the asana instance
+     * Gets a list of all of the cached tasks in the asana instance that match a tag Id
      *
+     * @param {String or Number} tag Tag Id number
      * @return {Promise} A promise containing everything marked with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        let idType;
-        
-        if( !_.isNumber(tag) && !_.isString(tag)){
-            throw 'Error, parameter is not a tag id number or a tag name string';
-        }
-        else if( _.isNumber(tag) && _.includes(tlsTagNames, tag) ){
-            idType = 'id';
-        }
-        else if( _.isString(tag) && _.has(tlsTagNames, tag) ){
-            idType = 'name';
-        }
-        else {
-            throw 'Error, passed parameter is not a tag id or name';
-        }
+        if( !_.isNumber(tag) || _.includes(tlsTagNames, tag)) throw 'Error, parameter is not a number or not an existing tag id number';
 
         return _.filter(tlsTasks.data, function(x){
-            return _.find(x.tags, {[idType]: tag});
+            return _.find(x.tags, {'id': tag});
         })
     },
 
@@ -293,11 +281,15 @@ module.exports = {
      * @return {Promise} A promise containing information about a specific task in Asana
      **/
     getTaskInfo: function (taskID) {
-        return new Promise(function (resolve, reject) {
-            client.tasks.findById(taskID).then(function(task){
-                resolve(task);
-            });
-        });
+        // return new Promise(function (resolve, reject) {
+        //     client.tasks.findById(taskID).then(function(task){
+        //         resolve(task);
+        //     });
+        // });
+
+        return _.find(tlsTasks.data, function(x){
+            return x.id == taskID;
+        })
     },
     
     /**

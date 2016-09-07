@@ -20,25 +20,23 @@ describe('Updating the caches', function(){
         })
     });
 
+    let tlsTasks;
+
     it('Should update the task cache', function(){
         this.timeout(8000);
         return tlsAsana.updateTasks().then(function(response){
-            assert.equal(response.data[0].id,173632881940301,'Task cache updated successfully');
-        })
-    });
-
-    let tlsTasks;
-    
-    it('Should get tags associated with a task when the tasks are cached', function(){
-        this.timeout(8000);
-        return tlsAsana.updateTasks().then(function(response){
-            assert.equal(response.data[0].tags[0].name,"Captioning",'Successfully got tags associated with tasks');
-            
+            assert.equal(response.data[0].id, 173632881940301, 'Task cache updated successfully');
             tlsTasks = response;
         })
+    });
+    
+    it('Should get tags associated with a task when the tasks are cached', function(){
+        if(!tlsTasks) throw "Error, can't get associated tags if task cache did not update";
+        assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Successfully got tags associated with tasks');
     })
 
     it('Should update the local task cache if older than set refresh time', function(){
+        if(!tlsTasks) throw "Error, can't reupdate cache if first update was not successful";
         assert(tlsAsana.checkLastCacheUpdate(tlsTasks, tlsAsana.updateTasks, 0), "Task cache was updated");
     })
 
@@ -54,11 +52,8 @@ describe('Querying Asana', function(){
     //     });
     // });
     
-    it('gets information about a specific task from asana', function(){
-        this.timeout(8000);
-        return tlsAsana.getTaskInfo('158749385851178').then(function(data){
-            assert.deepEqual(data.created_at, '2016-07-22T19:14:05.354Z' ); 
-        });
+    it('gets information about a specific task from cached tasks', function(){
+        assert.deepEqual(tlsAsana.getTaskInfo(173632881940301).created_at, '2016-08-29T18:21:24.044Z' ); 
     });
     
     it('gets all of the projects from Asana', function(){
@@ -103,10 +98,6 @@ describe('Querying Asana', function(){
 
 describe('Working with tags in Asana', function(){
     it('gets all of the unassigned tags', function(){
-        this.timeout(8000);
-        // return tlsAsana.getTasksByTag(167304830178312).then(function(list){
-        //     assert.ok(list.length > 0); 
-        // });
         assert.ok(tlsAsana.getTasksByTag(167304830178312).length > 0);
     });
     
