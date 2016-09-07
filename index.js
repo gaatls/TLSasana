@@ -215,22 +215,21 @@ module.exports = {
         }
     },
 
-
     checkBothCaches: function(){
-        let tlsAsana = this;
-        tlsAsana.checkLastCacheUpdate(tlsTagNames, tlsAsana.updateTagNames);
-        tlsAsana.checkLastCacheUpdate(tlsTasks, tlsAsana.updateTasks);
+        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
+        this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
     },
 
 
     /**
-     * Gets a list of all of the cached tasks in the asana instance that match a tag Id
+     * Check the age of the task cache and then gets a list of all of the cached 
+     * tasks that have a tag with the passed ID
      *
-     * @param {String or Number} tag Tag Id number
-     * @return {Promise} A promise containing everything marked with a specific tag in Asana
+     * @param {Number} tag Tag Id number
+     * @return {Array} Array containing all task objects with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        if( !_.isNumber(tag) || !_.includes(tlsTagNames, tag)) throw 'Error, parameter is not a number or not an existing tag id number';
+        this.checkLastCacheUpdate(tlsTasks, this.updateTasks());
 
         return _.filter(tlsTasks.data, function(x){
             return _.find(x.tags, {'id': tag});
@@ -238,15 +237,12 @@ module.exports = {
     },
 
 
-
-
-
     /**
      * Check the tag and task cache ages and then returns all of the tasks that are unassigned
      *
-     * @return {Object} An object containing only the unassigned requests in Asana
+     * @return {Array} An array containing the task objects that have an unassigned tag
      **/
-    getUnassigned: function () {
+    getUnassignedTasks: function () {
         this.checkBothCaches();
         let id = tlsTagNames.captioning_unassigned;
 
@@ -258,7 +254,9 @@ module.exports = {
      * @param tagName The name of the tag you are looking up in plain english (the Asana tag name)
      * @returns {String} the Asana id that represents the tagName you've passed in. Note that this is a cached tag.
      */
-    getCachedTagID: function(tagName){
+    getTagIDByName: function(tagName){
+        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames());
+
         if(tlsTagNames.variableStatus){
             if(tlsTagNames[tagName]){
                 return tlsTagNames[tagName];
@@ -283,12 +281,14 @@ module.exports = {
     },
     
     /**
-     * Returns information about a specific task
+     * Checks the task cache age and returns information about a specific task
      *
      * @param taskID - the id of the cached task we are interested in
      * @return {Object} Information about a specific task in the task cache
      **/
     getTaskInfo: function (taskID) {
+        this.checkLastCacheUpdate(tlsTasks, this.updateTasks());
+
         return _.find(tlsTasks.data, function(x){
             return x.id == taskID;
         })

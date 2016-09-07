@@ -101,34 +101,30 @@ describe('Working with tags in Asana', function(){
     });
     
     it('gets all of the unassigned captioning tags in Asana', function(){
-        //this.timeout(8000);
-        assert.ok(tlsAsana.getUnassigned().length > 0);
-        // return tlsAsana.getUnassigned().then(function(list){
-        //     assert.ok(list.length > 0);
-        // });
+        assert.ok(tlsAsana.getUnassignedTasks().length > 0);
     });
 
     it('requests a cached tag from the tlsAsana library', function(){
-        console.log("      Cached: " + tlsAsana.getCachedTagID('captioning_unassigned'));
-        return assert.deepEqual(tlsAsana.getCachedTagID('captioning_unassigned'), '167304830178312', 'it worked');
+        console.log("      Cached: " + tlsAsana.getTagIDByName('captioning_unassigned'));
+        return assert.deepEqual(tlsAsana.getTagIDByName('captioning_unassigned'), '167304830178312', 'it worked');
     });
     
     it('changes a tag from captioning_unassigned to captioning_accepted', function(){
         this.timeout(8000);
-        return tlsAsana.switchTag('166304358745259', tlsAsana.getCachedTagID('captioning_unassigned'), tlsAsana.getCachedTagID('captioning_accepted')).then(function(tag){
+        return tlsAsana.switchTag('166304358745259', tlsAsana.getTagIDByName('captioning_unassigned'), tlsAsana.getTagIDByName('captioning_accepted')).then(function(tag){
             assert.ok(tag);
         });
     });
     
     it('changes a tag back from captioning_accepted to captioning_unassigned', function(){
         this.timeout(8000);
-        return tlsAsana.switchTag('166304358745259', tlsAsana.getCachedTagID('captioning_accepted'), tlsAsana.getCachedTagID('captioning_unassigned')).then(function(tag){
+        return tlsAsana.switchTag('166304358745259', tlsAsana.getTagIDByName('captioning_accepted'), tlsAsana.getTagIDByName('captioning_unassigned')).then(function(tag){
             assert.ok(tag);
         });
     });
 
     it('looks up an undefined tag and receives undefined back', function(){
         this.timeout(8000);
-        assert.deepStrictEqual(tlsAsana.getCachedTagID('blahblahblahblah'), undefined, 'It should return undefined but it returns something else');
+        assert.deepStrictEqual(tlsAsana.getTagIDByName('blahblahblahblah'), undefined, 'It should return undefined but it returns something else');
     });
 });
