@@ -10,12 +10,16 @@ let client = undefined;
 let projectID = undefined;
 let tlsTagNames = {
     name: 'tlsTagNames',
-    refreshTime: 120000
+    deferredFunctions: [],
+    pendingPromise: null,
+    refreshTime: 10000
 };
 let tlsTasks = {
     name: 'tlsTasks',
     data: [],
-    refreshTime: 30000
+    deferredFunctions: [],
+    pendingPromise: null,
+    refreshTime: 10000
 };
 
 let pageLimit = 100;
@@ -87,14 +91,14 @@ module.exports = {
     updateTagNames: function() {
         let tlsAsana = this;
 
-        return new Promise( function(resolve, reject){
+        tlsTagNames.pendingPromise = new Promise( function(resolve, reject){
             client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: pageLimit}).then(function(response) {
                 if( response != undefined) {
                     //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
                         tlsAsana.combinePaginatedData('tags', response).then(function(response){
                             updateTlsTagCache(response);
-                            resolve(true);
+                            resolve(tlsTagNames);
                         });
                     }
                     else {
@@ -107,17 +111,16 @@ module.exports = {
                 }
 
                 function updateTlsTagCache(fullTagData){
-                    tlsTagNames['variableStatus'] = false;
-
                     _.forEach(fullTagData, function(value, key){
                         tlsTagNames[value.name] = value.id;
                     });
 
-                    tlsTagNames['variableStatus'] = true;
                     tlsTagNames['lastUpdated'] = Date.now();
                 }
             });
         });
+
+        return tlsTagNames.pendingPromise;
     },
 
 
@@ -125,7 +128,7 @@ module.exports = {
     updateTasks: function(){
         let tlsAsana = this;
         
-        return new Promise( function(resolve, reject){
+        tlsTasks.pendingPromise = new Promise( function(resolve, reject){
             client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,created_at,tags.name,tags.color'}).then(function(response){
                 if(response != undefined){
                     //hayden..if there are more pages let get the other pages of responses
@@ -145,18 +148,17 @@ module.exports = {
                 }
 
                 function updateTlsTaskCache(fullTaskData){
-                    tlsTasks['variableStatus'] = false;
-
                     tlsTasks.data = [];
                     _.forEach(fullTaskData, function(value, key){
                         tlsTasks.data.push(value);
                     });
 
-                    tlsTasks['variableStatus'] = true;
                     tlsTasks['lastUpdated'] = Date.now();
                 }
             });
         });
+
+        return tlsTasks.pendingPromise;
     },
 
 
@@ -206,8 +208,7 @@ module.exports = {
     checkLastCacheUpdate: function(cache, updateFunc){
         if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
             console.log('      ' + cache.name + ' cache needs to be refreshed');
-            updateFunc();
-            return true;
+            return updateFunc();
         }
         else {
             console.log('      ' + cache.name + " cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
@@ -228,7 +229,7 @@ module.exports = {
      * Simplifies the task cache check function call because it is repeated frequently
      */
     checkTaskCache: function(){
-        this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
+        return this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
     },
 
 
@@ -270,22 +271,25 @@ module.exports = {
         return this.getTasksByTag(id);
     },
 
+
     /**
-     *
+     * Looks for a the local tag cache for a plain english tag name and returns the corresponding
+     * Asana tag ID.
+     * 
      * @param tagName The name of the tag you are looking up in plain english (the Asana tag name)
      * @returns {String} the Asana id that represents the tagName you've passed in. Note that this is a cached tag.
      */
     getTagIDByName: function(tagName){
         this.checkTagCache();
 
-        if(tlsTagNames.variableStatus){
+        return tlsTagNames.pendingPromise.then(function(){
             if(tlsTagNames[tagName]){
                 return tlsTagNames[tagName];
             }
             else{
-                return undefined;
+                throw 'Error, no tag with that name exists in the cache';
             }
-        }
+        });
     },
 
     /**
