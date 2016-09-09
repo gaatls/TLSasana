@@ -84,9 +84,15 @@ describe('Querying our local caches', function(){
         })   
     });
     
-    it('Should get all of the local tasks that have an unnassigned tag', function(){
+    it('Should get all of the local tasks that have an unassigned tag', function(){
         return tlsAsana.getUnassignedTasks().then(taskArray => {
-            assert(taskArray.length > 0, 'Failed to get local tasks with the unnassigned tag');
+            assert(taskArray.length > 0, 'Failed to get local tasks with the unassigned tag');
+        });
+    });
+
+    it('Should get all of the local tasks that have a new task tag', function(){
+        return tlsAsana.getNewTasks().then(taskArray => {
+            assert(taskArray.length > 0, 'Failed to get local tasks with the new task tag');
         });
     });
 
@@ -94,16 +100,10 @@ describe('Querying our local caches', function(){
 
 describe('Querying Asana', function(){
     
-    // it('gets all of the new tasks in Asana', function(){
-    //     this.timeout(8000);
-    //     return tlsAsana.getNewRequests().then(function(list){
-    //         assert.ok(list.length > 0); 
-    //     });
-    // });
-    
     it('Should get all of the projects from Asana', function(){
         this.timeout(8000);
-        return tlsAsana.getAllProjects().then(function(projects){
+
+        return tlsAsana.getAllProjects().then(projects => {
             assert.ok( projects.length > 0 ); 
         });
     });

@@ -260,20 +260,6 @@ module.exports = {
 
 
     /**
-     * Check the tag and task cache ages and then returns all of the tasks that are unassigned
-     *
-     * @return {Array} An array containing the task objects that have an unassigned tag
-     **/
-    getUnassignedTasks: function () {
-        var tlsAsana = this;
-        
-        return this.checkBothCaches().then(function(){
-            return tlsAsana.getTasksByTag( tlsTagNames.captioning_unassigned );
-        });
-    },
-
-
-    /**
      * Looks for a the local tag cache for a plain english tag name and returns the corresponding
      * Asana tag ID.
      * 
@@ -307,15 +293,29 @@ module.exports = {
 
 
     /**
+     * Check the tag and task cache ages and then returns all of the tasks that are unassigned
+     *
+     * @return {Array} An array containing the task objects that have an unassigned tag
+     **/
+    getUnassignedTasks: function () {
+        var tlsAsana = this;
+        
+        return this.checkBothCaches().then(function(){
+            return tlsAsana.getTasksByTag( tlsTagNames.captioning_unassigned );
+        });
+    },
+
+
+    /**
      * Returns all of the new requests
      *
      * @return {Promise} A promise containing only the new requests in Asana
      **/
-    getNewRequests: function () {
-        return new Promise(function (resolve, reject) {
-            client.tasks.findByTag(tlsVars.TAG_NEWTASK).then(function (list) {
-                resolve(list.data);
-            });
+    getNewTasks: function () {
+        var tlsAsana = this;
+        
+        return this.checkBothCaches().then(function(){
+            return tlsAsana.getTasksByTag( tlsTagNames['New Request'] );
         });
     },
     
