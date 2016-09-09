@@ -49,7 +49,9 @@ describe('Making sure caches update', function(){
 
 describe('Querying our local caches', function(){
     it('gets information about a specific task from cached tasks', function(){
-        assert.deepEqual(tlsAsana.getTaskInfo(173632881940301).created_at, '2016-08-29T18:21:24.044Z' ); 
+        tlsAsana.getTaskInfoByID(173632881940301).then(taskInfo => {
+            assert(taskInfo.created_at, '2016-08-29T18:21:24.044Z', 'getting specific task info failed'); 
+        })
     });
 
     it('gets a cached tag id from the local tag cache', function(){
@@ -122,41 +124,55 @@ describe('Querying Asana', function(){
 
 describe('Working with tags in Asana', function(){
 
-    it('changes a tag from captioning_unassigned to captioning_accepted', function(){
-        this.timeout(8000);
-
-        return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_unassigned').then(tag => {
-            assert.deepEqual(tag, {}, 'tag change failed');
-        });
-    });
-
-    it('changes a tag back from captioning_accepted to captioning_unassigned ', function(){
-        this.timeout(8000);
-
-        return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_unassigned').then(tag => {
-            assert.deepEqual(tag, {}, 'tag change failed');
-        });
-    });
-
-
-
-
-
-
-
-
-
-
-
-
-    //TODO, change tests below to look like test above (need to use asynce promise notation now for getTagID func);
-
-    // it('changes a tag back from captioning_accepted to captioning_unassigned', function(){
+    // it('changes a tag from captioning_unassigned to captioning_accepted', function(){
     //     this.timeout(8000);
-    //     return tlsAsana.switchTag('166304358745259', tlsAsana.getTagIDByName('captioning_accepted'), tlsAsana.getTagIDByName('captioning_unassigned')).then(function(tag){
-    //         assert.ok(tag);
+    //
+    //     return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_unassigned').then(tag => {
+    //         assert.deepEqual(tag, {}, 'tag change failed');
     //     });
     // });
+
+    // it('changes a tag back from captioning_accepted to captioning_unassigned ', function(){
+    //     this.timeout(8000);
+    //
+    //     return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_unassigned').then(tag => {
+    //         assert.deepEqual(tag, {}, 'tag change failed');
+    //     });
+    // });
+
+    it('changes a tag from captioning_unassigned to captioning_accepted', function(){
+        this.timeout(8000);
+        
+        return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_accepted').then(response => {
+            return tlsAsana.updateTasks().then(updatedTasks => {
+                return tlsAsana.getTaskInfoByID('166304358745259').then(taskInfo => {
+                    //test looks at the tag in the first position of the tag array for this task,
+                    //so the test may be broken if other tags are added to this task even though the 
+                    //switchTag function may still be working
+                    console.log(taskInfo);
+                    assert.strictEqual(taskInfo.tags[0].name, 'captioning_accepted', 'tag change failed');
+                });
+            }); 
+        });
+    });
+
+    it('changes a tag from captioning_accepted to captioning_unassigned', function(){
+        this.timeout(8000);
+        
+        return tlsAsana.switchTag('166304358745259', 'captioning_accepted', 'captioning_unassigned').then(response => {
+            return tlsAsana.updateTasks().then(updatedTasks => {
+                return tlsAsana.getTaskInfoByID('166304358745259').then(taskInfo => {
+                    //this test looks at the tag in the first position of the tag array for this task,
+                    //so the test may be broken if other tags are added to this task even though the 
+                    //switchTag function may still be working
+                    console.log(taskInfo);
+                    assert.strictEqual(taskInfo.tags[0].name, 'captioning_unassigned', 'tag change failed');
+                });
+            }); 
+        });
+    });
+
+    //TODO, change tests below to look like test above (need to use asynce promise notation now for getTagID func);
 
     // it('looks up an undefined tag and receives undefined back', function(){
     //     this.timeout(8000);
