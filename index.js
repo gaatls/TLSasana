@@ -311,12 +311,12 @@ module.exports = {
      * @param taskID - the id of the cached task we are interested in
      * @return {Object} Information about a specific task in the task cache
      **/
-    getTaskInfo: function (taskID) {
-        this.checkTaskCache();
-
-        return _.find(tlsTasks.data, function(x){
-            return x.id == taskID;
-        })
+    getTaskInfoByID: function (taskID) {
+        return this.checkTaskCache().then(function(){
+            return _.find(tlsTasks.data, function(x){
+                return x.id == taskID;
+            })
+        });
     },
 
 
@@ -384,6 +384,8 @@ module.exports = {
     * @return {promise} A promise containing the task information after change
     */
     switchTag: function(taskID, oldTag, newTag){
+        let tlsAsana = this;
+        
         let promiseArray = [
             this.getTagIDByName(oldTag),
             this.getTagIDByName(newTag)
@@ -391,8 +393,9 @@ module.exports = {
 
         return Promise.all(promiseArray).then(IDresponses => {
             return new Promise( function(resolve, reject){
-                client.tasks.addTag(taskID, {tag: IDresponses[0] }).then(response => {                
-                    client.tasks.removeTag(taskID, {tag: IDresponses[1] }).then(response => {
+                client.tasks.removeTag(taskID, {tag: IDresponses[0] }).then(response => {                
+                    client.tasks.addTag(taskID, {tag: IDresponses[1] }).then(response => {
+                        tlsAsana.updateTasks(); //update the local task cache if we changed the tags associated with a task
                         resolve(response);  
                     });
                 }).catch(reason => { //catch any errors from the call to Asana
