@@ -210,11 +210,11 @@ module.exports = {
         }
         
         if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            console.log('      ' + cache.name + ' cache needs to be refreshed');
+            //console.log('      ' + cache.name + ' cache needs to be refreshed');
             return updateFunc();
         }
         else {
-            console.log('      ' + cache.name + " cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
+            //console.log('      ' + cache.name + " cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
             return cache.pendingPromise;
         }
     },

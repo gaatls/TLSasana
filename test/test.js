@@ -60,7 +60,6 @@ describe('Querying our local caches', function(){
         this.timeout(8000);
 
         return tlsAsana.getTagIDByName('captioning_unassigned').then(function(response){
-            console.log(response);
             assert.deepEqual(response, 167304830178312, 'local tag cache id request failed');
         });
     });
@@ -145,32 +144,30 @@ describe('Working with tags in Asana', function(){
     it('changes a tag from captioning_unassigned to captioning_accepted', function(){
         this.timeout(8000);
         
-        return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_accepted').then(response => {
-            return tlsAsana.updateTasks().then(updatedTasks => {
-                return tlsAsana.getTaskInfoByID('166304358745259').then(taskInfo => {
-                    //test looks at the tag in the first position of the tag array for this task,
-                    //so the test may be broken if other tags are added to this task even though the 
-                    //switchTag function may still be working
-                    console.log(taskInfo);
+        return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_accepted').then(tag => {
+                return client.tasks.findById('166304358745259').then(taskInfo => {  
+                    //Test looks at the tag in the first position of the tag array for this 
+                    //task,so the test may be broken if other tags are added to this task
+                    
+                    // console.log('Task tag switched to:');
+                    // console.log(taskInfo.tags[0]);
                     assert.strictEqual(taskInfo.tags[0].name, 'captioning_accepted', 'tag change failed');
                 });
-            }); 
         });
     });
 
     it('changes a tag from captioning_accepted to captioning_unassigned', function(){
         this.timeout(8000);
         
-        return tlsAsana.switchTag('166304358745259', 'captioning_accepted', 'captioning_unassigned').then(response => {
-            return tlsAsana.updateTasks().then(updatedTasks => {
-                return tlsAsana.getTaskInfoByID('166304358745259').then(taskInfo => {
-                    //this test looks at the tag in the first position of the tag array for this task,
-                    //so the test may be broken if other tags are added to this task even though the 
-                    //switchTag function may still be working
-                    console.log(taskInfo);
+        return tlsAsana.switchTag('166304358745259', 'captioning_accepted', 'captioning_unassigned').then(tag => {
+                return client.tasks.findById('166304358745259').then(taskInfo => {  
+                    //Test looks at the tag in the first position of the tag array for this 
+                    //task,so the test may be broken if other tags are added to this task
+                    
+                    // console.log('Task tag switched to:');
+                    // console.log(taskInfo.tags[0]);
                     assert.strictEqual(taskInfo.tags[0].name, 'captioning_unassigned', 'tag change failed');
                 });
-            }); 
         });
     });
 
