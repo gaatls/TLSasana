@@ -32,12 +32,12 @@ describe('Making sure caches update', function(){
         })
     });
     
-    it('Should get tags associated with a task when the tasks are cached', function(){
+    it('Should get the tags associated with a task when the tasks are cached', function(){
         if(!tlsTasks) throw "Error, can't get associated tags if task cache did not update";
         assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Successfully got tags associated with tasks');
     })
 
-    it('Should update a local cache if older than its set refresh time', function(){
+    it('Should update a local cache if it is older than its set refresh time', function(){
         this.timeout(20000);
         setTimeout(function(){
             console.log(tlsAsana.checkTaskCache());
@@ -50,13 +50,13 @@ describe('Making sure caches update', function(){
 
 
 describe('Querying our local caches', function(){
-    it('gets information about a specific task from cached tasks', function(){
+    it('Should get information about a specific task from the local tag cache', function(){
         tlsAsana.getTaskInfoByID(173632881940301).then(taskInfo => {
             assert(taskInfo.created_at, '2016-08-29T18:21:24.044Z', 'getting specific task info failed'); 
         })
     });
 
-    it('gets a cached tag id from the local tag cache', function(){
+    it('Should get a cached tag id from the local tag cache', function(){
         this.timeout(8000);
 
         return tlsAsana.getTagIDByName('captioning_unassigned').then(function(response){
@@ -64,11 +64,11 @@ describe('Querying our local caches', function(){
         });
     });
     
-    it('gets all of the local tasks that have a certain tag', function(){
+    it('Should get all of the local tasks that have a certain tag', function(){
         assert.ok(tlsAsana.getTasksByTag(43742631645357).length > 0);
     });
     
-    it('gets all of the local tasks that have an unnassigned tag', function(){
+    it('Should get all of the local tasks that have an unnassigned tag', function(){
         assert.ok(tlsAsana.getUnassignedTasks().length > 0);
     });
 
@@ -83,7 +83,7 @@ describe('Querying Asana', function(){
     //     });
     // });
     
-    it('gets all of the projects from Asana', function(){
+    it('Should get all of the projects from Asana', function(){
         this.timeout(8000);
         return tlsAsana.getAllProjects().then(function(projects){
             assert.ok( projects.length > 0 ); 
@@ -141,7 +141,7 @@ describe('Working with tags in Asana', function(){
     //     });
     // });
 
-    it('changes a tag from captioning_unassigned to captioning_accepted', function(){
+    it("Should change a task's tag from captioning_unassigned to captioning_accepted", function(){
         this.timeout(8000);
         
         return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_accepted').then(tag => {
@@ -156,7 +156,7 @@ describe('Working with tags in Asana', function(){
         });
     });
 
-    it('changes a tag from captioning_accepted to captioning_unassigned', function(){
+    it("Should change a task's tag from captioning_accepted to captioning_unassigned", function(){
         this.timeout(8000);
         
         return tlsAsana.switchTag('166304358745259', 'captioning_accepted', 'captioning_unassigned').then(tag => {
