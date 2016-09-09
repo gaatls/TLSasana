@@ -4,6 +4,21 @@ var tlsAsana = require('../index.js');
 var tlsConsts = require('../tlsConstants.js');
 let client = undefined;
 
+/**
+ * Test cache so that we can make sure a refresh function is being called 
+ * for our caches without having to alter their production refresh times
+ */
+let testCache = {
+    name: 'testCache',
+    lastUpdated: Date.now(),
+    refreshTime: 1000,
+    testRefresh: function(){
+        return true;
+    }
+};
+
+
+
 describe('Connecting to Asana', function(){
    it('Should setup the connection', function(){
         this.timeout(8000);
@@ -27,24 +42,22 @@ describe('Making sure caches update', function(){
     it('Should update the task cache', function(){
         this.timeout(8000);
         return tlsAsana.updateTasks().then(function(response){
-            assert.equal(response.data[0].id, 173632881940301, 'Task cache updated successfully');
             tlsTasks = response;
+            assert.equal(response.data[0].id, 173632881940301, 'Failed to update task cache');
         })
     });
     
     it('Should get the tags associated with a task when the tasks are cached', function(){
-        if(!tlsTasks) throw "Error, can't get associated tags if task cache did not update";
-        assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Successfully got tags associated with tasks');
+        if(!tlsTasks){
+            throw "Error, cannot check the tags associated with a task if the task cache did not update";
+        } 
+        assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Failed to get tags associated with tasks');
     })
 
     it('Should update a local cache if it is older than its set refresh time', function(){
-        this.timeout(20000);
-        setTimeout(function(){
-            console.log(tlsAsana.checkTaskCache());
-            assert(tlsAsana.checkTaskCache(), "Test task cache did not update");
-        }, 11000);
-        
-        
+        this.timeout(8000);
+
+        assert(tlsAsana.checkLastCacheUpdate(testCache, testCache.testRefresh), 'Failed to update local cache');
     })
 });
 
