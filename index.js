@@ -2,18 +2,20 @@
 //for when we bring in lodas..got to put in package.json and install first
 var _ = require('lodash');
 
-
 var asana = require('asana');
 var tlsVars = require('./tlsConstants.js')
 var asanaKey = process.env.ASANAKEY;
 let client = undefined;
 let projectID = undefined;
+let pageLimit = 100;
+
 let tlsTagNames = {
     name: 'tlsTagNames',
     deferredFunctions: [],
     pendingPromise: null,
     refreshTime: 120000
 };
+
 let tlsTasks = {
     name: 'tlsTasks',
     data: [],
@@ -21,8 +23,6 @@ let tlsTasks = {
     pendingPromise: null,
     refreshTime: 30000
 };
-
-let pageLimit = 100;
 
 //stores the static info associated with the tag and task
 //requests so that we don't have to pass a million parameters
@@ -38,7 +38,11 @@ let asanaRequestDetails = {
     }
 }
 
+
+
 module.exports = {
+
+
 
     /**
      * Always needs to be run first to startup the connection between node and asana.
@@ -65,6 +69,8 @@ module.exports = {
             }
         });
     },
+
+
 
     /**
      * Sets the tlsTagNames variable with the tags currently stored in Asana for quick (cached) reference later.
@@ -110,6 +116,9 @@ module.exports = {
 
 
 
+    /**
+     * TODO fill this in
+     */
     updateTasks: function(){
         let tlsAsana = this;
         
@@ -145,6 +154,7 @@ module.exports = {
 
         return tlsTasks.pendingPromise;
     },
+
 
 
     /**
@@ -183,6 +193,7 @@ module.exports = {
     },
 
 
+
     /**
      * Checks when a cache was last updated and sees if it needs to be refreshed
      * 
@@ -213,6 +224,7 @@ module.exports = {
     },
 
 
+
     /**
      * Simplifies the tag cache check function call because it is repeated frequently
      */
@@ -221,12 +233,14 @@ module.exports = {
     },
 
 
+
     /**
      * Simplifies the task cache check function call because it is repeated frequently
      */
     checkTaskCache: function(){
         return this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
     },
+
 
 
     /**
@@ -243,6 +257,7 @@ module.exports = {
     },
 
 
+
     /**
      * Check the age of the task cache and then gets a list of all of the cached 
      * tasks that have a tag with the passed ID
@@ -257,6 +272,7 @@ module.exports = {
             });
         });
     },
+
 
 
     /**
@@ -277,6 +293,8 @@ module.exports = {
         });
     },
 
+
+
     /**
      * Checks the task cache age and returns information about a specific task
      *
@@ -290,6 +308,7 @@ module.exports = {
             })
         });
     },
+
 
 
     /**
@@ -306,6 +325,7 @@ module.exports = {
     },
 
 
+
     /**
      * Returns all of the new requests
      *
@@ -319,6 +339,7 @@ module.exports = {
         });
     },
     
+
     
     /**
     * Returns a list of all of the projects currently in Asana
@@ -332,6 +353,8 @@ module.exports = {
             });
         });
     },
+
+
     
     /**
     * Returns a list of all of the sections currently within a project
@@ -346,6 +369,8 @@ module.exports = {
         }); 
     },
     
+
+
     /**
     * Moves a specific task to a specific section
     * 
@@ -359,6 +384,7 @@ module.exports = {
             });
         });
     },
+    
     
     
     /**

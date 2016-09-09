@@ -3,7 +3,7 @@ var assert = require('assert');
 var tlsAsana = require('../index.js');
 var tlsConsts = require('../tlsConstants.js');
 let client = undefined;
-
+let tlsTasks;
 /**
  * Test cache so that we can make sure a refresh function is being called 
  * for our caches without having to alter their production refresh times
@@ -20,6 +20,7 @@ let testCache = {
 
 
 describe('Connecting to Asana', function(){
+
    it('Should setup the connection', function(){
         this.timeout(8000);
         return tlsAsana.connect('166216691534199').then(function(response){
@@ -27,17 +28,19 @@ describe('Connecting to Asana', function(){
             assert(response,'Connection failed');
         });
    });
+
 });
 
+
+
 describe('Making sure caches update', function(){
+    
     it('Should update the tag cache', function(){
         this.timeout(8000);
         return tlsAsana.updateTagNames(10).then(function(response){
             assert.equal(response.Accepted,167304830178303,'Tag cache updated successfully');
         })
     });
-
-    let tlsTasks;
 
     it('Should update the task cache', function(){
         this.timeout(8000);
@@ -52,15 +55,15 @@ describe('Making sure caches update', function(){
             throw "Error, cannot check the tags associated with a task if the task cache did not update";
         } 
         assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Failed to get tags associated with tasks');
-    })
+    });
 
     it('Should update a local cache if it is older than its set refresh time', function(){
         this.timeout(8000);
 
         assert(tlsAsana.checkLastCacheUpdate(testCache, testCache.testRefresh), 'Failed to update local cache');
-    })
-});
+    });
 
+});
 
 
 
@@ -98,6 +101,8 @@ describe('Querying our local caches', function(){
 
 });
 
+
+
 describe('Querying Asana', function(){
     
     it('Should get all of the projects from Asana', function(){
@@ -110,54 +115,38 @@ describe('Querying Asana', function(){
     
 });
 
-//describe('Working with sections in Asana', function(){
-//
-//        it('gets all of the sections within the test project', function(){
-//            this.timeout(8000);
-//            return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(function(sections){
-//                assert.ok( sections.length > 0);
-//            });
-//});
-//    it('sets the section to unassigned', function(){
-//        this.timeout(8000);
-//        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-//            assert(returnedTask);
-//        });
-//    });
-//    
-//    it('sets the section to accepted', function(){
-//        this.timeout(8000);
-//        return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-//            assert(returnedTask);
-//        });
-//    });
-//});
-//
-//describe('Working with tasks in Asana', function(){
-//    it('gets the information about a specific task', function(){
-//        return tlsAsana.getTaskInfo('166304358745259').then(function(returnedTask){
-//            assert.ok(returnedTask); 
-//        });
-//    });
-//});
+
+
+describe('Working with sections in Asana', function(){
+
+    // it('Should get all of the sections within the test project', function(){
+    //     this.timeout(8000);
+
+    //     return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(sections => {
+    //         console.log(sections);
+    //         assert(sections.length > 0, 'Failed to get all of the sections in a project');
+    //     });
+    // });
+
+    // it('sets the section to unassigned', function(){
+    //     this.timeout(8000);
+    //     return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
+    //         assert(returnedTask);
+    //     });
+    // });
+   
+    // it('sets the section to accepted', function(){
+    //     this.timeout(8000);
+
+    //     return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
+    //         assert(returnedTask);
+    //     });
+    // });
+});
+
+
 
 describe('Working with tags in Asana', function(){
-
-    // it('changes a tag from captioning_unassigned to captioning_accepted', function(){
-    //     this.timeout(8000);
-    //
-    //     return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_unassigned').then(tag => {
-    //         assert.deepEqual(tag, {}, 'tag change failed');
-    //     });
-    // });
-
-    // it('changes a tag back from captioning_accepted to captioning_unassigned ', function(){
-    //     this.timeout(8000);
-    //
-    //     return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_unassigned').then(tag => {
-    //         assert.deepEqual(tag, {}, 'tag change failed');
-    //     });
-    // });
 
     it("Should change a task's tag from captioning_unassigned to captioning_accepted", function(){
         this.timeout(8000);
@@ -195,4 +184,5 @@ describe('Working with tags in Asana', function(){
     //     this.timeout(8000);
     //     assert.deepStrictEqual(tlsAsana.getTagIDByName('blahblahblahblah'), undefined, 'It should return undefined but it returns something else');
     // });
+
 });
