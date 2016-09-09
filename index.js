@@ -384,15 +384,25 @@ module.exports = {
     * @return {promise} A promise containing the task information after change
     */
     switchTag: function(taskID, oldTag, newTag){
-        return new Promise( function(resolve, reject){
-            client.tasks.addTag(taskID, {tag:newTag}).then(response => {                
-                client.tasks.removeTag(taskID, {tag:oldTag}).then(response => {
-                    resolve(response);  
+        let promiseArray = [
+            this.getTagIDByName(oldTag),
+            this.getTagIDByName(newTag)
+        ];
+
+        return Promise.all(promiseArray).then(IDresponses => {
+            return new Promise( function(resolve, reject){
+                client.tasks.addTag(taskID, {tag: IDresponses[0] }).then(response => {                
+                    client.tasks.removeTag(taskID, {tag: IDresponses[1] }).then(response => {
+                        resolve(response);  
+                    });
+                }).catch(reason => { //catch any errors from the call to Asana
+                    console.log(reason);
+                    reject(reason);
                 });
-            }).catch(reason => {
-                console.log(reason);
-                reject(reason);
             });
+        }).catch(reason => { //catch any errors from the Promise.all promise
+            console.log(reason);
+            reject(reason);
         });
     }
 
