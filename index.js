@@ -206,13 +206,22 @@ module.exports = {
      * @return {Bool} True if cache needed to be updated, otherwise false (hayden...using for testing, may not need)
      */
     checkLastCacheUpdate: function(cache, updateFunc){
+        if(!cache.lastUpdated){
+            if(cache.pendingPromise){
+                return cache.pendingPromise;
+            }
+            else {
+                return updateFunc();
+            }
+        }
+        
         if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
             console.log('      ' + cache.name + ' cache needs to be refreshed');
             return updateFunc();
         }
         else {
             console.log('      ' + cache.name + " cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
-            return false;
+            return cache.pendingPromise;
         }
     },
 
@@ -221,7 +230,7 @@ module.exports = {
      * Simplifies the tag cache check function call because it is repeated frequently
      */
     checkTagCache: function(){
-        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
+        return this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
     },
 
 
@@ -238,8 +247,12 @@ module.exports = {
      * they are repeated frequently
      */
     checkBothCaches: function(){
-        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
-        this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
+        let promiseArray = [        
+            this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames),
+            this.checkLastCacheUpdate(tlsTasks, this.updateTasks)
+        ];
+
+        return Promise.all(promiseArray);
     },
 
 
@@ -372,10 +385,13 @@ module.exports = {
     */
     switchTag: function(taskID, oldTag, newTag){
         return new Promise( function(resolve, reject){
-            client.tasks.addTag(taskID, {tag:newTag}).then( function(taskBack){
-                client.tasks.removeTag(taskID, {tag:oldTag}).then(function(taskAfter){
-                    resolve(taskAfter);  
+            client.tasks.addTag(taskID, {tag:newTag}).then(response => {                
+                client.tasks.removeTag(taskID, {tag:oldTag}).then(response => {
+                    resolve(response);  
                 });
+            }).catch(reason => {
+                console.log(reason);
+                reject(reason);
             });
         });
     }

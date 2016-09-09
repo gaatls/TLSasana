@@ -1,8 +1,14 @@
+/**This is a development only file that I was using to clean up the test file and make the 
+ * main test file more organized
+ */
+
+
 "use strict";
 var assert = require('assert');
 var tlsAsana = require('../index.js');
 var tlsConsts = require('../tlsConstants.js')
 
+//// CONNECTION -----------------------------------
 describe('Connecting to Asana', function(){
    it('Should setup the connection', function(){
         this.timeout(8000);
@@ -11,31 +17,38 @@ describe('Connecting to Asana', function(){
         });
    });
 });
+//// CONNECTION -----------------------------------
 
-describe('Working with caches', function(){
-    it('Should update the tag cache', function(){
+
+describe('Working with tags in Asana', function(){
+
+    it('changes a tag from captioning_unassigned to captioning_accepted', function(){
         this.timeout(8000);
-        return tlsAsana.updateTagNames(10).then(function(response){
-            assert.equal(response.Accepted,167304830178303,'Tag cache updated successfully');
-        })
-    });
+        let promiseArray = [
+            tlsAsana.getTagIDByName('captioning_unassigned'),
+            tlsAsana.getTagIDByName('captioning_accepted')
+        ];
 
-    it('Should update the task cache', function(){
-        this.timeout(8000);
-        return tlsAsana.updateTasks().then(function(response){
-            assert.equal(response.data[0].id, 173632881940301, 'Task cache updated successfully');
-        })
-    });
-
-    it('requests a cached id from the local tag cache', function(){
-        this.timeout(8000);
-
-        return tlsAsana.getTagIDByName('captioning_unassigned').then(function(response){
-            console.log(response);
-            assert.deepEqual(response, 167304830178312, 'local tag cache id request failed');
+        return Promise.all(promiseArray).then(responses => {
+            return tlsAsana.switchTag('166304358745259', responses[0], responses[1]).then(tag => {
+                assert.deepEqual(tag, {}, 'tag change failed');
+            });
         });
     });
 
+    // it('changes a tag back from captioning_accepted to captioning_unassigned ', function(){
+    //     this.timeout(8000);
+    //     let promiseArray = [
+    //         tlsAsana.getTagIDByName('captioning_accepted'),
+    //         tlsAsana.getTagIDByName('captioning_unassigned')
+    //     ];
+
+    //     return Promise.all(promiseArray).then(responses => {
+    //         return tlsAsana.switchTag('166304358745259', responses[0], responses[1]).then(function(tag){
+    //             assert(tag, 'tag change failed');
+    //         });
+    //     });
+    // });
 
 });
 
