@@ -251,11 +251,11 @@ module.exports = {
      * @return {Array} Array containing all task objects with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        this.checkTaskCache();
-
-        return _.filter(tlsTasks.data, function(x){
-            return _.find(x.tags, {'id': tag});
-        })
+        return this.checkTaskCache().then(function(){
+            return _.filter(tlsTasks.data, function(x){
+                return _.find(x.tags, {'id': tag});
+            });
+        });
     },
 
 
@@ -265,10 +265,11 @@ module.exports = {
      * @return {Array} An array containing the task objects that have an unassigned tag
      **/
     getUnassignedTasks: function () {
-        this.checkBothCaches();
-        let id = tlsTagNames.captioning_unassigned;
-
-        return this.getTasksByTag(id);
+        var tlsAsana = this;
+        
+        return this.checkBothCaches().then(function(){
+            return tlsAsana.getTasksByTag( tlsTagNames.captioning_unassigned );
+        });
     },
 
 
@@ -280,9 +281,7 @@ module.exports = {
      * @returns {String} the Asana id that represents the tagName you've passed in. Note that this is a cached tag.
      */
     getTagIDByName: function(tagName){
-        this.checkTagCache();
-
-        return tlsTagNames.pendingPromise.then(function(){
+        return this.checkTagCache().then(function(){
             if(tlsTagNames[tagName]){
                 return tlsTagNames[tagName];
             }

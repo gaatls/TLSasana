@@ -62,27 +62,32 @@ describe('Making sure caches update', function(){
 });
 
 
+
+
 describe('Querying our local caches', function(){
+    
     it('Should get information about a specific task from the local tag cache', function(){
-        tlsAsana.getTaskInfoByID(173632881940301).then(taskInfo => {
-            assert(taskInfo.created_at, '2016-08-29T18:21:24.044Z', 'getting specific task info failed'); 
+        return tlsAsana.getTaskInfoByID(173632881940301).then(taskInfo => {
+            assert.equal(taskInfo.created_at, '2016-08-29T18:21:24.044Z', 'getting specific task info failed'); 
         })
     });
 
     it('Should get a cached tag id from the local tag cache', function(){
-        this.timeout(8000);
-
-        return tlsAsana.getTagIDByName('captioning_unassigned').then(function(response){
-            assert.deepEqual(response, 167304830178312, 'local tag cache id request failed');
+        return tlsAsana.getTagIDByName('captioning_unassigned').then(tagID => {
+            assert.equal(tagID, 167304830178312, 'Failed to get cached tag id');
         });
     });
     
     it('Should get all of the local tasks that have a certain tag', function(){
-        assert.ok(tlsAsana.getTasksByTag(43742631645357).length > 0);
+        return tlsAsana.getTasksByTag(43742631645357).then(taskArray => {
+            assert(taskArray.length > 0, 'Failed to get local tasks with a certain tag');
+        })   
     });
     
     it('Should get all of the local tasks that have an unnassigned tag', function(){
-        assert.ok(tlsAsana.getUnassignedTasks().length > 0);
+        return tlsAsana.getUnassignedTasks().then(taskArray => {
+            assert(taskArray.length > 0, 'Failed to get local tasks with the unnassigned tag');
+        });
     });
 
 });
