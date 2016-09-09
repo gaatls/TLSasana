@@ -64,15 +64,9 @@ module.exports = {
             try {
                 client = asana.Client.create().useAccessToken(asanaKey);
                 if (client) {
-                    tlsAsana.updateTagNames().then(
-                        tlsAsana.updateTasks().then(
-                            function(response){
-                                //console.log(response);
-                                resolve(true);
-                            }
-                        )
-                    );
-                    resolve(true);
+                    tlsAsana.updateTagNames();
+                    tlsAsana.updateTasks();
+                    resolve(client);
                 }
             }
             catch (err) {

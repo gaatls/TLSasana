@@ -1,13 +1,15 @@
 "use strict";
 var assert = require('assert');
 var tlsAsana = require('../index.js');
-var tlsConsts = require('../tlsConstants.js')
+var tlsConsts = require('../tlsConstants.js');
+let client = undefined;
 
 describe('Connecting to Asana', function(){
    it('Should setup the connection', function(){
         this.timeout(8000);
         return tlsAsana.connect('166216691534199').then(function(response){
-            assert.deepEqual(response,true,'Successful connection');
+            client = response;
+            assert(response,'Connection failed');
         });
    });
 });
