@@ -195,11 +195,14 @@ module.exports = {
     /**
      * Checks when a cache was last updated and sees if it needs to be refreshed
      * 
-     * @param {Object} cache Local cache that may need to be updated
-     * @param {Function} updateFunc Name of the function that will be called if update is necessary
-     * @return {Bool} True if cache needed to be updated, otherwise false (hayden...using for testing, may not need)
+     * @param {Object} cache - Local cache that may need to be updated
+     * @param {Function} updateFunc - Name of the function that will be called if update is necessary
+     * @return {Promise} Promise from the cache function that could be finished or in progress 
+     *                   (cache.pendingPromise), or just being created (updateFunc)
      */
     checkLastCacheUpdate: function(cache, updateFunc){
+        //If cache has never been updated see if we can access the pending
+        //update promise-if not, explicitly update this cache
         if(!cache.lastUpdated){
             if(cache.pendingPromise){
                 return cache.pendingPromise;
@@ -208,13 +211,12 @@ module.exports = {
                 return updateFunc();
             }
         }
-        
-        if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            //console.log('      ' + cache.name + ' cache needs to be refreshed');
+        else if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
+            //console.log(cache.name + ' cache needs to be refreshed');
             return updateFunc();
         }
         else {
-            //console.log('      ' + cache.name + " cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
+            //console.log(cache.name + " cache age is acceptable");
             return cache.pendingPromise;
         }
     },
