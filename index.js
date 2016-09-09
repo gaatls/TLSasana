@@ -12,14 +12,14 @@ let tlsTagNames = {
     name: 'tlsTagNames',
     deferredFunctions: [],
     pendingPromise: null,
-    refreshTime: 10000
+    refreshTime: 120000
 };
 let tlsTasks = {
     name: 'tlsTasks',
     data: [],
     deferredFunctions: [],
     pendingPromise: null,
-    refreshTime: 10000
+    refreshTime: 30000
 };
 
 let pageLimit = 100;
@@ -39,15 +39,6 @@ let asanaRequestDetails = {
 }
 
 module.exports = {
-
-    testCache: {
-        name: 'testCache',
-        lastUpdated: Date.now(),
-        refreshTime: 0,
-        testRefresh: function(){
-            return;
-        }
-    },
 
     /**
      * Always needs to be run first to startup the connection between node and asana.
@@ -212,11 +203,11 @@ module.exports = {
             }
         }
         else if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            //console.log(cache.name + ' cache needs to be refreshed');
+            //console.log( cache.name + ' cache needs to be refreshed, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
             return updateFunc();
         }
         else {
-            //console.log(cache.name + " cache age is acceptable");
+            //console.log(cache.name + ' cache age is acceptable, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
             return cache.pendingPromise;
         }
     },
