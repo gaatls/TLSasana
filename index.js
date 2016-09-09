@@ -1,5 +1,5 @@
 "use strict";
-//for when we bring in lodas..got to put in package.json and install first
+
 var _ = require('lodash');
 
 var asana = require('asana');
@@ -386,7 +386,7 @@ module.exports = {
     },
     
     
-    
+
     /**
     * switches from the current tag to a new tag
     * 

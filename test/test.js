@@ -46,7 +46,7 @@ describe('Making sure caches update', function(){
         this.timeout(8000);
         return tlsAsana.updateTasks().then(function(response){
             tlsTasks = response;
-            assert.equal(response.data[0].id, 173632881940301, 'Failed to update task cache');
+            assert.equal(response.data[0].id, 179441931389102, 'Failed to update task cache');
         })
     });
     
@@ -119,14 +119,14 @@ describe('Querying Asana', function(){
 
 describe('Working with sections in Asana', function(){
 
-    // it('Should get all of the sections within the test project', function(){
-    //     this.timeout(8000);
+    it('Should get all of the sections within the test project', function(){
+        this.timeout(8000);
 
-    //     return tlsAsana.getAllSections(tlsConsts.PROJ_NTP).then(sections => {
-    //         console.log(sections);
-    //         assert(sections.length > 0, 'Failed to get all of the sections in a project');
-    //     });
-    // });
+        return tlsAsana.getAllSections('166216691534199').then(sections => {
+            console.log(sections);
+            assert(sections.length > 0, 'Failed to get all of the sections in a project');
+        });
+    });
 
     // it('sets the section to unassigned', function(){
     //     this.timeout(8000);
