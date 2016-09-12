@@ -54,7 +54,7 @@ describe('Making sure caches update', function(){
         if(!tlsTasks){
             throw "Error, cannot check the tags associated with a task if the task cache did not update";
         } 
-        assert.equal(tlsTasks.data[0].tags[0].name,"Captioning",'Failed to get tags associated with tasks');
+        assert.equal(tlsTasks.data[2].tags[0].name,"New Request",'Failed to get tags associated with tasks');
     });
 
     it('Should update a local cache if it is older than its set refresh time', function(){
@@ -70,8 +70,8 @@ describe('Making sure caches update', function(){
 describe('Querying our local caches', function(){
     
     it('Should get information about a specific task from the local tag cache', function(){
-        return tlsAsana.getTaskInfoByID(173632881940301).then(taskInfo => {
-            assert.equal(taskInfo.created_at, '2016-08-29T18:21:24.044Z', 'getting specific task info failed'); 
+        return tlsAsana.getTaskInfoByID(169176168459508).then(taskInfo => {
+            assert.equal(taskInfo.created_at, '2016-08-17T21:06:24.132Z', 'getting specific task info failed'); 
         })
     });
 
@@ -82,7 +82,7 @@ describe('Querying our local caches', function(){
     });
     
     it('Should get all of the local tasks that have a certain tag', function(){
-        return tlsAsana.getTasksByTag(43742631645357).then(taskArray => {
+        return tlsAsana.getTasksByTag(167304830178312).then(taskArray => {
             assert(taskArray.length > 0, 'Failed to get local tasks with a certain tag');
         })   
     });
