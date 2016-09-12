@@ -31,14 +31,21 @@ describe('Connecting to Asana', function(){
 
 });
 
-
+describe('Making sure the available users update', function(){
+    it('Should update the workspace users', function(){
+        this.timeout(8000);
+        return tlsAsana.updateUsers().then( response => {
+            assert(response.data[0].name, "Chris Hodge", 'Failed to update the available users');
+        });
+    });
+})
 
 describe('Making sure caches update', function(){
     
     it('Should update the tag cache', function(){
         this.timeout(8000);
         return tlsAsana.updateTagNames(10).then(function(response){
-            assert.equal(response.Accepted,167304830178303,'Tag cache updated successfully');
+            assert.equal(response.Accepted,167304830178303,'Failed to update the tag cache');
         })
     });
 
@@ -46,7 +53,7 @@ describe('Making sure caches update', function(){
         this.timeout(8000);
         return tlsAsana.updateTasks().then(function(response){
             tlsTasks = response;
-            assert.equal(response.data[0].id, 179441931389102, 'Failed to update task cache');
+            assert.equal(response.data[0].id, 180230098413779, 'Failed to update task cache');
         })
     });
     
@@ -54,7 +61,7 @@ describe('Making sure caches update', function(){
         if(!tlsTasks){
             throw "Error, cannot check the tags associated with a task if the task cache did not update";
         } 
-        assert.equal(tlsTasks.data[2].tags[0].name,"New Request",'Failed to get tags associated with tasks');
+        assert.equal(tlsTasks.data[4].tags[0].name,"New Request",'Failed to get tags associated with tasks');
     });
 
     it('Should update a local cache if it is older than its set refresh time', function(){
@@ -108,42 +115,12 @@ describe('Querying Asana', function(){
     it('Should get all of the projects from Asana', function(){
         this.timeout(8000);
 
-        return tlsAsana.getAllProjects().then(projects => {
+        return tlsAsana.getAllProjects().then(projects => { 
             assert.ok( projects.length > 0 ); 
         });
     });
     
 });
-
-
-
-describe('Working with sections in Asana', function(){
-
-    it('Should get all of the sections within the test project', function(){
-        this.timeout(8000);
-
-        return tlsAsana.getAllSections('166216691534199').then(sections => {
-            console.log(sections);
-            assert(sections.length > 0, 'Failed to get all of the sections in a project');
-        });
-    });
-
-    // it('sets the section to unassigned', function(){
-    //     this.timeout(8000);
-    //     return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_UNASSIGNED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-    //         assert(returnedTask);
-    //     });
-    // });
-   
-    // it('sets the section to accepted', function(){
-    //     this.timeout(8000);
-
-    //     return tlsAsana.moveTaskToSection('166304358745259', tlsConsts.SECTION_ACCEPTED, tlsConsts.PROJ_NTP).then(function(returnedTask){
-    //         assert(returnedTask);
-    //     });
-    // });
-});
-
 
 
 describe('Working with tags in Asana', function(){
@@ -178,11 +155,31 @@ describe('Working with tags in Asana', function(){
         });
     });
 
-    //TODO, change tests below to look like test above (need to use asynce promise notation now for getTagID func);
-
-    // it('looks up an undefined tag and receives undefined back', function(){
-    //     this.timeout(8000);
-    //     assert.deepStrictEqual(tlsAsana.getTagIDByName('blahblahblahblah'), undefined, 'It should return undefined but it returns something else');
-    // });
+    //Test is ugly, but I was having trouble using the 'assert.throws' method with our promise structure.
+    //This works as a thorough test even though it is messy
+    it('Should look up an undefined tag and receive a tag error', function(){
+        this.timeout(8000);
+        
+        return tlsAsana.getTagIDByName('blahblahblah').then( response => {
+            assert.ok(false, 'Undefined tag did not throw an error');
+        }).catch(err => {
+            if ( (err instanceof Error) && /Error, no tag exists in the cache with that name/.test(err) ) {
+                assert.ok(true);
+            }
+            else {
+                assert.ok(false, 'Undefined tag did not throw an error');
+            }
+        });
+    });
 
 });
+
+
+// describe('Creating tasks in Asana', function(){
+//     it('should create a new task', function(){
+//         this.timeout(8000);
+//         return tlsAsana.createTask(166216691534199, 'TestTask', "Test description here', '2/2/2016', {Teacher: 'Mr. Davis',Course: 'MAAT799'}).then( response => {
+//             console.log(response);
+//         });
+//     });
+// });

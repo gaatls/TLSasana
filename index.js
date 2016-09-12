@@ -7,6 +7,11 @@ var tlsVars = require('./tlsConstants.js')
 var asanaKey = process.env.ASANAKEY;
 let client = undefined;
 let projectID = undefined;
+
+let tlsUsers = {
+    pendingPromise: null
+};
+
 let pageLimit = 100;
 
 let tlsTagNames = {
@@ -73,11 +78,30 @@ module.exports = {
 
 
     /**
+     * Gets all the users that we are authorized access to with the current API key.
+     * Sets a property within tlsUsers that represents the last promise that was created that may or may not be fulfilled.
+     *   
+     * @return {Promise} Promise returned by Asana API, fulfilled with user data
+     */
+    updateUsers: function() {
+        tlsUsers.pendingPromise = new Promise( function(resolve, reject){
+            client.users.findByWorkspace(36641419235321, {'opt_fields': 'id,name,email'}).then(response => {
+                tlsUsers.data = response.data;
+                tlsUsers.lastUpdated = Date.now();
+                resolve(response);
+            });
+        });
+
+        return tlsUsers.pendingPromise;
+    },
+
+
+
+    /**
      * Sets the tlsTagNames variable with the tags currently stored in Asana for quick (cached) reference later.
-     * Sets a property within tlsTagNames that represents whether the variable is okay to use and when it was last
-     * updated
+     * Sets a property within tlsTagNames that represents the last promise that was created that may or may not be fulfilled.
      *
-     * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
+     * @return {Promise} Promise returned by Asana API, fulfilled with tag data
      */
     updateTagNames: function() {
         let tlsAsana = this;
@@ -117,13 +141,16 @@ module.exports = {
 
 
     /**
-     * TODO fill this in
+     * Sets the tlsTasks variable with the tasks currently stored in Asana for quick (cached) reference later.
+     * Sets a property within tlsTasks that represents the last promise that was created that may or may not be fulfilled.
+     *
+     * @return {Promise} Promise returned by Asana API, fulfilled with task data
      */
     updateTasks: function(){
         let tlsAsana = this;
         
         tlsTasks.pendingPromise = new Promise( function(resolve, reject){
-            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,created_at,tags.name,tags.color'}).then(function(response){
+            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,projects,assignee,external,created_at,tags.name,tags.color'}).then(function(response){
                 if(response != undefined){
                     //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
@@ -288,7 +315,7 @@ module.exports = {
                 return tlsTagNames[tagName];
             }
             else{
-                throw 'Error, no tag with that name exists in the cache';
+                throw new Error('Error, no tag exists in the cache with that name');
             }
         });
     },
@@ -356,36 +383,7 @@ module.exports = {
 
 
     
-    /**
-    * Returns a list of all of the sections currently within a project
-    *
-    * @return {Promise} A promise containing the list of all of the sections within a project
-    */
-    getAllSections: function(){
-        return new Promise( function(resolve,reject){
-            client.projects.sections(projectID).then( function(sectionList){
-                resolve(sectionList.data); 
-            });
-        }); 
-    },
-    
 
-
-    /**
-    * Moves a specific task to a specific section
-    * 
-    * @param taskID The task to be moved
-    * @param newSection The section ID to move the task to
-    */
-    moveTaskToSection: function(taskID, newSection){
-        return new Promise( function(resolve,reject){
-            client.tasks.addProject(taskID, {project: projectID, section:newSection}).then(function(taskBack){
-                resolve(taskBack);
-            });
-        });
-    },
-    
-    
 
     /**
     * switches from the current tag to a new tag
@@ -419,6 +417,35 @@ module.exports = {
             console.log(reason);
             reject(reason);
         });
+    },
+
+
+    /**
+     * Create new task
+     */
+    createTask(projectID, name, description, due_date, dataObj){
+        
+        //1. Have to handle assignee here...have to make a function to 
+        //   look at assignee data and get an id by a name or something
+
+        //2. Just have to quick test the due_date to make sure thats what the 
+        //   API wants----may also have to do some JS date formatting
+
+        /*
+        return client.tasks.create({
+                'name': name,
+                'description': description,
+                //'assignee': {'id': '170705266868499'},
+                //'due_date': due_date //still have to test
+                'workspace': 36641419235321,
+                'projects': [projectID],//166216691534199
+                'external': {
+                    'data': JSON.stringify(dataObj)
+                }
+            }
+        );
+        */
     }
+
 
 }
