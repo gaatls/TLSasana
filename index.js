@@ -1,21 +1,33 @@
 "use strict";
-//for when we bring in lodas..got to put in package.json and install first
-var _ = require('lodash');
 
+var _ = require('lodash');
 
 var asana = require('asana');
 var tlsVars = require('./tlsConstants.js')
 var asanaKey = process.env.ASANAKEY;
 let client = undefined;
 let projectID = undefined;
+
+let tlsUsers = {
+    pendingPromise: null
+};
+
+let pageLimit = 100;
+
 let tlsTagNames = {
+    name: 'tlsTagNames',
+    deferredFunctions: [],
+    pendingPromise: null,
     refreshTime: 120000
 };
+
 let tlsTasks = {
+    name: 'tlsTasks',
     data: [],
+    deferredFunctions: [],
+    pendingPromise: null,
     refreshTime: 30000
 };
-let pageLimit = 100;
 
 //stores the static info associated with the tag and task
 //requests so that we don't have to pass a million parameters
@@ -31,7 +43,10 @@ let asanaRequestDetails = {
     }
 }
 
+
+
 module.exports = {
+
 
 
     /**
@@ -49,15 +64,9 @@ module.exports = {
             try {
                 client = asana.Client.create().useAccessToken(asanaKey);
                 if (client) {
-                    tlsAsana.updateTagNames().then(
-                        tlsAsana.updateTasks().then(
-                            function(response){
-                                //console.log(response);
-                                resolve(true);
-                            }
-                        )
-                    );
-                    resolve(true);
+                    tlsAsana.updateTagNames();
+                    tlsAsana.updateTasks();
+                    resolve(client);
                 }
             }
             catch (err) {
@@ -66,24 +75,45 @@ module.exports = {
         });
     },
 
+
+
+    /**
+     * Gets all the users that we are authorized access to with the current API key.
+     * Sets a property within tlsUsers that represents the last promise that was created that may or may not be fulfilled.
+     *   
+     * @return {Promise} Promise returned by Asana API, fulfilled with user data
+     */
+    updateUsers: function() {
+        tlsUsers.pendingPromise = new Promise( function(resolve, reject){
+            client.users.findByWorkspace(36641419235321, {'opt_fields': 'id,name,email'}).then(response => {
+                tlsUsers.data = response.data;
+                tlsUsers.lastUpdated = Date.now();
+                resolve(response);
+            });
+        });
+
+        return tlsUsers.pendingPromise;
+    },
+
+
+
     /**
      * Sets the tlsTagNames variable with the tags currently stored in Asana for quick (cached) reference later.
-     * Sets a property within tlsTagNames that represents whether the variable is okay to use and when it was last
-     * updated
+     * Sets a property within tlsTagNames that represents the last promise that was created that may or may not be fulfilled.
      *
-     * @return {boolean} true if the tlsTagNames variable was set successfully, false otherwise
+     * @return {Promise} Promise returned by Asana API, fulfilled with tag data
      */
     updateTagNames: function() {
         let tlsAsana = this;
 
-        return new Promise( function(resolve, reject){
+        tlsTagNames.pendingPromise = new Promise( function(resolve, reject){
             client.tags.findByWorkspace(tlsVars.WORKSPACE_TLS, {limit: pageLimit}).then(function(response) {
                 if( response != undefined) {
                     //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
                         tlsAsana.combinePaginatedData('tags', response).then(function(response){
                             updateTlsTagCache(response);
-                            resolve(true);
+                            resolve(tlsTagNames);
                         });
                     }
                     else {
@@ -96,26 +126,31 @@ module.exports = {
                 }
 
                 function updateTlsTagCache(fullTagData){
-                    tlsTagNames['variableStatus'] = false;
-
                     _.forEach(fullTagData, function(value, key){
                         tlsTagNames[value.name] = value.id;
                     });
 
-                    tlsTagNames['variableStatus'] = true;
                     tlsTagNames['lastUpdated'] = Date.now();
                 }
             });
         });
+
+        return tlsTagNames.pendingPromise;
     },
 
 
 
+    /**
+     * Sets the tlsTasks variable with the tasks currently stored in Asana for quick (cached) reference later.
+     * Sets a property within tlsTasks that represents the last promise that was created that may or may not be fulfilled.
+     *
+     * @return {Promise} Promise returned by Asana API, fulfilled with task data
+     */
     updateTasks: function(){
         let tlsAsana = this;
         
-        return new Promise( function(resolve, reject){
-            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,tags.name,tags.color'}).then(function(response){
+        tlsTasks.pendingPromise = new Promise( function(resolve, reject){
+            client.tasks.findByProject(projectID, {limit: pageLimit, opt_fields: 'id,name,projects,assignee,external,created_at,tags.name,tags.color'}).then(function(response){
                 if(response != undefined){
                     //hayden..if there are more pages let get the other pages of responses
                     if(response._response.next_page){
@@ -134,18 +169,19 @@ module.exports = {
                 }
 
                 function updateTlsTaskCache(fullTaskData){
-                    tlsTasks['variableStatus'] = false;
-
+                    tlsTasks.data = [];
                     _.forEach(fullTaskData, function(value, key){
                         tlsTasks.data.push(value);
                     });
 
-                    tlsTasks['variableStatus'] = true;
                     tlsTasks['lastUpdated'] = Date.now();
                 }
             });
         });
+
+        return tlsTasks.pendingPromise;
     },
+
 
 
     /**
@@ -184,107 +220,153 @@ module.exports = {
     },
 
 
+
     /**
      * Checks when a cache was last updated and sees if it needs to be refreshed
      * 
-     * @param {Object} cache Local cache that may need to be updated
-     * @param {Function} updateFunc Name of the function that will be called if update is necessary
-     * @param {Number} refreshOverride Overrides set refresh value, using to test with a 0 refresh value so function always refreshes the cache
-     * @return {Bool} True if cache needed to be updated, otherwise false (hayden...using for testing, may not need)
+     * @param {Object} cache - Local cache that may need to be updated
+     * @param {Function} updateFunc - Name of the function that will be called if update is necessary
+     * @return {Promise} Promise from the cache function that could be finished or in progress 
+     *                   (cache.pendingPromise), or just being created (updateFunc)
      */
-    checkLastCacheUpdate: function(cache, updateFunc, refreshOverride){
-        //this is crazy, but I put in so I could test this cache update function...will change next week
-        if(Number.isInteger(refreshOverride) && refreshOverride != undefined) cache.refreshTime = refreshOverride;
-
-        if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            console.log('      Cache needs to be refreshed');
-            updateFunc();
-            return true;
+    checkLastCacheUpdate: function(cache, updateFunc){
+        //If cache has never been updated see if we can access the pending
+        //update promise-if not, explicitly update this cache
+        if(!cache.lastUpdated){
+            if(cache.pendingPromise){
+                return cache.pendingPromise;
+            }
+            else {
+                return updateFunc();
+            }
+        }
+        else if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
+            //console.log( cache.name + ' cache needs to be refreshed, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            return updateFunc();
         }
         else {
-            console.log("      Cache age is acceptable, it's only " + (Date.now() - cache.lastUpdated) + ' ms old');
-            return false;
+            //console.log(cache.name + ' cache age is acceptable, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            return cache.pendingPromise;
         }
     },
 
 
+
     /**
-     * Gets a list of all of the tasks in the asana instance
+     * Simplifies the tag cache check function call because it is repeated frequently
+     */
+    checkTagCache: function(){
+        return this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
+    },
+
+
+
+    /**
+     * Simplifies the task cache check function call because it is repeated frequently
+     */
+    checkTaskCache: function(){
+        return this.checkLastCacheUpdate(tlsTasks, this.updateTasks);
+    },
+
+
+
+    /**
+     * Simplifies the call to both the tag and task cache check function calls because 
+     * they are repeated frequently
+     */
+    checkBothCaches: function(){
+        let promiseArray = [        
+            this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames),
+            this.checkLastCacheUpdate(tlsTasks, this.updateTasks)
+        ];
+
+        return Promise.all(promiseArray);
+    },
+
+
+
+    /**
+     * Check the age of the task cache and then gets a list of all of the cached 
+     * tasks that have a tag with the passed ID
      *
-     * @return {Promise} A promise containing everything marked with a specific tag in Asana
+     * @param {Number} tag Tag Id number
+     * @return {Array} Array containing all task objects with a specific tag in Asana
      **/
     getTasksByTag: function (tag) {
-        return new Promise(function (resolve, reject) {
-            client.tasks.findByTag(tag).then(function (list) {
-                resolve(list.data);
+        return this.checkTaskCache().then(function(){
+            return _.filter(tlsTasks.data, function(x){
+                return _.find(x.tags, {'id': tag});
             });
         });
     },
 
 
 
-
-
     /**
-     * Returns all of the tasks that are unassigned
-     *
-     * @return {Promise} A promise containing only the unassigned requests in Asana
-     **/
-    getUnassigned: function () {
-        //sample of checking for local cache age ...will need to do in more places and maybe differently next week
-        this.checkLastCacheUpdate(tlsTagNames, this.updateTagNames);
-
-        return new Promise(function (resolve, reject) {
-            if(tlsTagNames.variableStatus) {
-                client.tasks.findByTag(tlsTagNames.captioning_unassigned).then(function (list) {
-                    resolve(list.data);
-                });
-            }
-        });
-    },
-
-    /**
-     *
+     * Looks for a the local tag cache for a plain english tag name and returns the corresponding
+     * Asana tag ID.
+     * 
      * @param tagName The name of the tag you are looking up in plain english (the Asana tag name)
      * @returns {String} the Asana id that represents the tagName you've passed in. Note that this is a cached tag.
      */
-    getCachedTagID: function(tagName){
-        if(tlsTagNames.variableStatus){
+    getTagIDByName: function(tagName){
+        return this.checkTagCache().then(function(){
             if(tlsTagNames[tagName]){
                 return tlsTagNames[tagName];
             }
             else{
-                return undefined;
+                throw new Error('Error, no tag exists in the cache with that name');
             }
-        }
+        });
     },
+
+
+
+    /**
+     * Checks the task cache age and returns information about a specific task
+     *
+     * @param taskID - the id of the cached task we are interested in
+     * @return {Object} Information about a specific task in the task cache
+     **/
+    getTaskInfoByID: function (taskID) {
+        return this.checkTaskCache().then(function(){
+            return _.find(tlsTasks.data, function(x){
+                return x.id == taskID;
+            })
+        });
+    },
+
+
+
+    /**
+     * Check the tag and task cache ages and then returns all of the tasks that are unassigned
+     *
+     * @return {Array} An array containing the task objects that have an unassigned tag
+     **/
+    getUnassignedTasks: function () {
+        var tlsAsana = this;
+        
+        return this.checkBothCaches().then(function(){
+            return tlsAsana.getTasksByTag( tlsTagNames.captioning_unassigned );
+        });
+    },
+
+
 
     /**
      * Returns all of the new requests
      *
      * @return {Promise} A promise containing only the new requests in Asana
      **/
-    getNewRequests: function () {
-        return new Promise(function (resolve, reject) {
-            client.tasks.findByTag(tlsVars.TAG_NEWTASK).then(function (list) {
-                resolve(list.data);
-            });
+    getNewTasks: function () {
+        var tlsAsana = this;
+        
+        return this.checkBothCaches().then(function(){
+            return tlsAsana.getTasksByTag( tlsTagNames['New Request'] );
         });
     },
     
-    /**
-     * Returns information about a specific task
-     *
-     * @param taskID - the id in asana of the task we are interested in
-     * @return {Promise} A promise containing information about a specific task in Asana
-     **/
-    getTaskInfo: function (taskID) {
-        return new Promise(function (resolve, reject) {
-            client.tasks.findById(taskID).then(function(task){
-                resolve(task);
-            });
-        });
-    },
+
     
     /**
     * Returns a list of all of the projects currently in Asana
@@ -298,35 +380,11 @@ module.exports = {
             });
         });
     },
+
+
     
-    /**
-    * Returns a list of all of the sections currently within a project
-    *
-    * @return {Promise} A promise containing the list of all of the sections within a project
-    */
-    getAllSections: function(){
-        return new Promise( function(resolve,reject){
-            client.projects.sections(projectID).then( function(sectionList){
-                resolve(sectionList.data); 
-            });
-        }); 
-    },
-    
-    /**
-    * Moves a specific task to a specific section
-    * 
-    * @param taskID The task to be moved
-    * @param newSection The section ID to move the task to
-    */
-    moveTaskToSection: function(taskID, newSection){
-        return new Promise( function(resolve,reject){
-            client.tasks.addProject(taskID, {project: projectID, section:newSection}).then(function(taskBack){
-                resolve(taskBack);
-            });
-        });
-    },
-    
-    
+
+
     /**
     * switches from the current tag to a new tag
     * 
@@ -336,13 +394,58 @@ module.exports = {
     * @return {promise} A promise containing the task information after change
     */
     switchTag: function(taskID, oldTag, newTag){
-        return new Promise( function(resolve, reject){
-            client.tasks.addTag(taskID, {tag:newTag}).then( function(taskBack){
-                client.tasks.removeTag(taskID, {tag:oldTag}).then(function(taskAfter){
-                    resolve(taskAfter);  
+        let tlsAsana = this;
+        
+        let promiseArray = [
+            this.getTagIDByName(oldTag),
+            this.getTagIDByName(newTag)
+        ];
+
+        return Promise.all(promiseArray).then(IDresponses => {
+            return new Promise( function(resolve, reject){
+                client.tasks.removeTag(taskID, {tag: IDresponses[0] }).then(response => {                
+                    client.tasks.addTag(taskID, {tag: IDresponses[1] }).then(response => {
+                        tlsAsana.updateTasks(); //update the local task cache if we changed the tags associated with a task
+                        resolve(response);  
+                    });
+                }).catch(reason => { //catch any errors from the call to Asana
+                    console.log(reason);
+                    reject(reason);
                 });
             });
+        }).catch(reason => { //catch any errors from the Promise.all promise
+            console.log(reason);
+            reject(reason);
         });
+    },
+
+
+    /**
+     * Create new task
+     */
+    createTask(projectID, name, description, due_date, dataObj){
+        
+        //1. Have to handle assignee here...have to make a function to 
+        //   look at assignee data and get an id by a name or something
+
+        //2. Just have to quick test the due_date to make sure thats what the 
+        //   API wants----may also have to do some JS date formatting
+
+        /*
+        return client.tasks.create({
+                'name': name,
+                'description': description,
+                //'assignee': {'id': '170705266868499'},
+                //'due_date': due_date //still have to test
+                'workspace': 36641419235321,
+                'projects': [projectID],//166216691534199
+                'external': {
+                    'data': JSON.stringify(dataObj)
+                }
+            }
+        );
+        */
     }
+
 
 }
