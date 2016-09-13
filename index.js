@@ -12,6 +12,7 @@ let tlsUsers = {
     pendingPromise: null
 };
 
+let autoCacheTimeout = 10000;
 let pageLimit = 100;
 
 let tlsTagNames = {
@@ -66,6 +67,7 @@ module.exports = {
                 if (client) {
                     tlsAsana.updateTagNames();
                     tlsAsana.updateTasks();
+                    tlsAsana.autoCacheCheck(autoCacheTimeout);
                     resolve(client);
                 }
             }
@@ -283,6 +285,19 @@ module.exports = {
         return Promise.all(promiseArray);
     },
 
+
+    /**
+     * 
+     */
+    autoCacheCheck: function(timeout){
+        setTimeout(function(){
+            //do tasks
+
+            //call this function again
+            console.log(this);
+            console.log(this.autoCacheCheck);
+        }, timeout);
+    },
 
 
     /**
