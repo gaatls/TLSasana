@@ -1,9 +1,12 @@
 "use strict";
+let _ = require('lodash');
 var assert = require('assert');
 var tlsAsana = require('../index.js');
 var tlsConsts = require('../tlsConstants.js');
+
 let client = undefined;
 let tlsTasks;
+
 /**
  * Test cache so that we can make sure a refresh function is being called 
  * for our caches without having to alter their production refresh times
@@ -89,20 +92,32 @@ describe('Querying our local caches', function(){
     });
     
     it('Should get all of the local tasks that have a certain tag', function(){
-        return tlsAsana.getTasksByTag(167304830178312).then(taskArray => {
-            assert(taskArray.length > 0, 'Failed to get local tasks with a certain tag');
+        let tagID = 167304830178312;
+        
+        return tlsAsana.getTasksByTag(tagID).then(taskArray => {
+            assert.notDeepEqual(_.filter(taskArray[0].tags, x => {
+                return x.id === tagID;
+            }), [], 'Failed to return a task with the correct tag');
         })   
     });
     
-    it('Should get all of the local tasks that have an unassigned tag', function(){
+    it('Should get all of the local tasks that have an unassigned tag', function(){     
+        let unassignedTagID = 167304830178312;
+        
         return tlsAsana.getUnassignedTasks().then(taskArray => {
-            assert(taskArray.length > 0, 'Failed to get local tasks with the unassigned tag');
+            assert.notDeepEqual(_.filter(taskArray[0].tags, x => {
+                return x.id === unassignedTagID;
+            }), [], 'Failed to return a task with an unassigned tag');
         });
     });
 
     it('Should get all of the local tasks that have a new task tag', function(){
+        let newTagID = 44184307053951;
+        
         return tlsAsana.getNewTasks().then(taskArray => {
-            assert(taskArray.length > 0, 'Failed to get local tasks with the new task tag');
+            assert.notDeepEqual(_.filter(taskArray[0].tags, x => {
+                return x.id === newTagID;
+            }), [], 'Failed to return a task with a new task tag');
         });
     });
 
