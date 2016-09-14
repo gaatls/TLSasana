@@ -12,7 +12,7 @@ let tlsUsers = {
     pendingPromise: null
 };
 
-let autoCacheTimeout = 10000;
+let autoCacheTimeout = 15000;
 let pageLimit = 100;
 
 let tlsTagNames = {
@@ -243,11 +243,11 @@ module.exports = {
             }
         }
         else if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            //console.log( cache.name + ' cache needs to be refreshed, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            console.log( cache.name + ' cache age X, it is ' + (Date.now() - cache.lastUpdated) + 'ms old !!!'); 
             return updateFunc();
         }
         else {
-            //console.log(cache.name + ' cache age is acceptable, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            console.log( cache.name + ' cache age $, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
             return cache.pendingPromise;
         }
     },
@@ -290,13 +290,15 @@ module.exports = {
      * 
      */
     autoCacheCheck: function(timeout){
-        setTimeout(function(){
-            //do tasks
+        let tlsAsana = this;
 
-            //call this function again
-            console.log(this);
-            console.log(this.autoCacheCheck);
-        }, timeout);
+        return new Promise(function(resolve, reject){
+            setTimeout(function(){
+                resolve(tlsAsana.checkBothCaches());
+            }, timeout);
+        }).then(() => {
+            return tlsAsana.autoCacheCheck(timeout);
+        });
     },
 
 

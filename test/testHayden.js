@@ -17,7 +17,6 @@ describe('Connecting to Asana', function(){
         this.timeout(8000);
         return tlsAsana.connect('166216691534199').then(function(response){
             client = response;
-            //console.log(client);
             assert(response,'Connection failed');
         });
    });
@@ -25,35 +24,20 @@ describe('Connecting to Asana', function(){
 //// CONNECTION -----------------------------------
 
 
-describe('Working with tags in Asana', function(){
-
-    it('changes a tag from captioning_unassigned to captioning_accepted', function(){
-        this.timeout(8000);
-        
-        return tlsAsana.switchTag('166304358745259', 'captioning_unassigned', 'captioning_accepted').then(tag => {
-                return client.tasks.findById('166304358745259').then(taskInfo => {  
-                    //Test looks at the tag in the first position of the tag array for this 
-                    //task,so the test may be broken if other tags are added to this task
-                    console.log('Task tag switched to:');
-                    console.log(taskInfo.tags[0]);
-                    assert.strictEqual(taskInfo.tags[0].name, 'captioning_accepted', 'tag change failed');
-                });
-        });
-    });
-
-    it('changes a tag from captioning_accepted to captioning_unassigned', function(){
-        this.timeout(8000);
-        
-        return tlsAsana.switchTag('166304358745259', 'captioning_accepted', 'captioning_unassigned').then(tag => {
-                return client.tasks.findById('166304358745259').then(taskInfo => {  
-                    //Test looks at the tag in the first position of the tag array for this 
-                    //task,so the test may be broken if other tags are added to this task
-                    console.log('Task tag switched to:');
-                    console.log(taskInfo.tags[0]);
-                    assert.strictEqual(taskInfo.tags[0].name, 'captioning_unassigned', 'tag change failed');
-                });
+describe('Autocheck', function(){
+    it('Should autocheck both caches', function(){
+        this.timeout(200000);
+        // return tlsAsana.autoCacheCheck(1000).then(response => {
+        //     console.log(response);
+        //     assert(response, 'error');
+        // })
+        return tlsAsana.autoCacheCheck(60000).then( response => {
+            console.log(response);
+            assert(response, 'no response');
+            //assert(response.data[0].name, "Chris Hodge", 'shit failed');
         });
     });
 
 });
+
 
