@@ -243,11 +243,11 @@ module.exports = {
             }
         }
         else if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            console.log( cache.name + ' cache age X, it is ' + (Date.now() - cache.lastUpdated) + 'ms old !!!'); 
+            //console.log( cache.name + ' cache age X, it is ' + (Date.now() - cache.lastUpdated) + 'ms old --- !!!'); 
             return updateFunc();
         }
         else {
-            console.log( cache.name + ' cache age $, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            //console.log( cache.name + ' cache age $, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
             return cache.pendingPromise;
         }
     },
