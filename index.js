@@ -440,7 +440,8 @@ module.exports = {
     /**
      * Create new task
      */
-    createTask(projectID, name, description, due_date, dataObj){
+    //createTask: function(projectID, name, description, due_date, dataObj){
+    createTask: function(name, dataObj){
         
         //1. Have to handle assignee here...have to make a function to 
         //   look at assignee data and get an id by a name or something
@@ -448,20 +449,21 @@ module.exports = {
         //2. Just have to quick test the due_date to make sure thats what the 
         //   API wants----may also have to do some JS date formatting
 
-        /*
+        console.log('data submitted to createTask func')
+        console.log(dataObj);
+
         return client.tasks.create({
                 'name': name,
-                'description': description,
-                //'assignee': {'id': '170705266868499'},
-                //'due_date': due_date //still have to test
+                'description': 'description',
+                'assignee': {'id': '170705266868499'},
                 'workspace': 36641419235321,
-                'projects': [projectID],//166216691534199
+                'projects': projectID,
                 'external': {
                     'data': JSON.stringify(dataObj)
                 }
             }
         );
-        */
+        
     }
 
 
