@@ -24,11 +24,16 @@ let testCache = {
 
 describe('Connecting to Asana', function(){
 
+   //need to include some use of tlsAsana (getAllProjects in this case) 
+   //to evaluate connection--if auth fails an error is thrown before the assert message
    it('Should setup the connection', function(){
         this.timeout(8000);
         return tlsAsana.connect('166216691534199').then(function(response){
             client = response;
-            assert(response,'Connection failed');
+                
+            return tlsAsana.getAllProjects().then( projectArray => {
+                assert(Array.isArray( projectArray ), 'Connection authorized, but cannot get projects');
+            });
         });
    });
 

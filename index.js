@@ -97,7 +97,7 @@ module.exports = {
                 tlsUsers.data = response.data;
                 tlsUsers.lastUpdated = Date.now();
                 resolve(response);
-            });
+            }).catch( err => reject(err) );
         });
 
         return tlsUsers.pendingPromise;
@@ -140,7 +140,7 @@ module.exports = {
 
                     tlsTagNames['lastUpdated'] = Date.now();
                 }
-            });
+            }).catch( err => reject(err) );
         });
 
         return tlsTagNames.pendingPromise;
@@ -184,7 +184,7 @@ module.exports = {
 
                     tlsTasks['lastUpdated'] = Date.now();
                 }
-            });
+            }).catch( err => reject(err) );
         });
 
         return tlsTasks.pendingPromise;
@@ -223,7 +223,7 @@ module.exports = {
                     let combinedTagData = previousResponse.data.concat(response.data);
                     resolve(combinedTagData);
                 }
-            });
+            }).catch( err => reject(err) );
         });
     },
 
@@ -304,7 +304,7 @@ module.exports = {
             }, timeout);
         }).then(() => {
             return tlsAsana.autoCacheCheck(timeout);
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -320,7 +320,7 @@ module.exports = {
             return _.filter(tlsTasks.data, function(x){
                 return _.find(x.tags, {'id': tag});
             });
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -356,7 +356,7 @@ module.exports = {
             return _.find(tlsTasks.data, function(x){
                 return x.id == taskID;
             })
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -371,7 +371,7 @@ module.exports = {
         
         return this.checkBothCaches().then(function(){
             return tlsAsana.getTasksByTag( tlsTagNames.captioning_unassigned );
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -386,7 +386,7 @@ module.exports = {
         
         return this.checkBothCaches().then(function(){
             return tlsAsana.getTasksByTag( tlsTagNames['New Request'] );
-        });
+        }).catch( err => reject(err) );
     },
     
 
@@ -400,7 +400,7 @@ module.exports = {
         return new Promise( function(resolve, reject){
             client.projects.findAll({team:tlsVars.TEAM_TLSMEDIA}).then( function(projectList){
                 resolve(projectList.data);
-            });
+            }).catch( err => reject(err) );
         });
     },
 
