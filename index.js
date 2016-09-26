@@ -59,7 +59,13 @@ module.exports = {
      **/
     connect: function (requestedProjectID) {
         let tlsAsana = this;
-        projectID = requestedProjectID;
+
+        if( !(typeof requestedProjectID == "string") ){
+            throw new TypeError('Requested project ID parameter must be a string') ;
+        }
+        else {
+            projectID = requestedProjectID;
+        }
 
         return new Promise(function(resolve, reject){
             try {
