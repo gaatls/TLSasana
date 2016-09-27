@@ -24,17 +24,16 @@ describe('Connecting to Asana', function(){
 //// CONNECTION -----------------------------------
 
 
-describe('Autocheck', function(){
-    it('Should autocheck both caches', function(){
-        this.timeout(200000);
+describe('create task stuff', function(){
+    it('Should use promise for task creation', function(){
+        this.timeout(8000);
         // return tlsAsana.autoCacheCheck(1000).then(response => {
         //     console.log(response);
         //     assert(response, 'error');
         // })
-        return tlsAsana.autoCacheCheck(60000).then( response => {
+        return tlsAsana.createTask().then( response => {
             console.log(response);
-            assert(response, 'no response');
-            //assert(response.data[0].name, "Chris Hodge", 'shit failed');
+            assert(response,'Connection failed');
         });
     });
 

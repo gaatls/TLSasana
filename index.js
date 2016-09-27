@@ -458,17 +458,22 @@ module.exports = {
         console.log('data submitted to createTask func')
         console.log(dataObj);
 
-        return client.tasks.create({
-                'name': name,
-                'description': 'description',
-                'assignee': {'id': '170705266868499'},
-                'workspace': 36641419235321,
-                'projects': projectID,
-                'external': {
-                    'data': JSON.stringify(dataObj)
-                }
+        let taskObj = {
+            'name': name,
+            'description': 'description',
+            'assignee': {'id': '170705266868499'},
+            'workspace': 36641419235321,
+            'projects': projectID,
+            'external': {
+                'data': JSON.stringify(dataObj)
             }
-        );
+        };
+
+        return new Promise( function(resolve, reject){
+            client.tasks.create().then( response => {
+                resolve(response);
+            }).catch( err => reject(err) );
+        }) 
         
     }
 
