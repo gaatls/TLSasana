@@ -470,7 +470,7 @@ module.exports = {
         };
 
         return new Promise( function(resolve, reject){
-            client.tasks.create().then( response => {
+            client.tasks.create(taskObj).then( response => {
                 resolve(response);
             }).catch( err => reject(err) );
         }) 
