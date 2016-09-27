@@ -12,6 +12,7 @@ let tlsUsers = {
     pendingPromise: null
 };
 
+let autoCacheTimeout = 15000;
 let pageLimit = 100;
 
 let tlsTagNames = {
@@ -58,7 +59,13 @@ module.exports = {
      **/
     connect: function (requestedProjectID) {
         let tlsAsana = this;
-        projectID = requestedProjectID;
+
+        if( !(typeof requestedProjectID == "string") ){
+            throw new TypeError('Requested project ID parameter must be a string') ;
+        }
+        else {
+            projectID = requestedProjectID;
+        }
 
         return new Promise(function(resolve, reject){
             try {
@@ -66,6 +73,7 @@ module.exports = {
                 if (client) {
                     tlsAsana.updateTagNames();
                     tlsAsana.updateTasks();
+                    tlsAsana.autoCacheCheck(autoCacheTimeout);
                     resolve(client);
                 }
             }
@@ -89,7 +97,7 @@ module.exports = {
                 tlsUsers.data = response.data;
                 tlsUsers.lastUpdated = Date.now();
                 resolve(response);
-            });
+            }).catch( err => reject(err) );
         });
 
         return tlsUsers.pendingPromise;
@@ -132,7 +140,7 @@ module.exports = {
 
                     tlsTagNames['lastUpdated'] = Date.now();
                 }
-            });
+            }).catch( err => reject(err) );
         });
 
         return tlsTagNames.pendingPromise;
@@ -176,7 +184,7 @@ module.exports = {
 
                     tlsTasks['lastUpdated'] = Date.now();
                 }
-            });
+            }).catch( err => reject(err) );
         });
 
         return tlsTasks.pendingPromise;
@@ -215,7 +223,7 @@ module.exports = {
                     let combinedTagData = previousResponse.data.concat(response.data);
                     resolve(combinedTagData);
                 }
-            });
+            }).catch( err => reject(err) );
         });
     },
 
@@ -241,11 +249,11 @@ module.exports = {
             }
         }
         else if( ( Date.now() - cache.lastUpdated ) >= cache.refreshTime ) {
-            //console.log( cache.name + ' cache needs to be refreshed, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            //console.log( cache.name + ' cache age X, it is ' + (Date.now() - cache.lastUpdated) + 'ms old --- !!!'); 
             return updateFunc();
         }
         else {
-            //console.log(cache.name + ' cache age is acceptable, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
+            //console.log( cache.name + ' cache age $, it is ' + (Date.now() - cache.lastUpdated) + 'ms old'); 
             return cache.pendingPromise;
         }
     },
@@ -284,6 +292,21 @@ module.exports = {
     },
 
 
+    /**
+     * 
+     */
+    autoCacheCheck: function(timeout){
+        let tlsAsana = this;
+
+        return new Promise(function(resolve, reject){
+            setTimeout(function(){
+                resolve(tlsAsana.checkBothCaches());
+            }, timeout);
+        }).then(() => {
+            return tlsAsana.autoCacheCheck(timeout);
+        }).catch( err => reject(err) );
+    },
+
 
     /**
      * Check the age of the task cache and then gets a list of all of the cached 
@@ -297,7 +320,7 @@ module.exports = {
             return _.filter(tlsTasks.data, function(x){
                 return _.find(x.tags, {'id': tag});
             });
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -333,7 +356,7 @@ module.exports = {
             return _.find(tlsTasks.data, function(x){
                 return x.id == taskID;
             })
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -348,7 +371,7 @@ module.exports = {
         
         return this.checkBothCaches().then(function(){
             return tlsAsana.getTasksByTag( tlsTagNames.captioning_unassigned );
-        });
+        }).catch( err => reject(err) );
     },
 
 
@@ -363,7 +386,7 @@ module.exports = {
         
         return this.checkBothCaches().then(function(){
             return tlsAsana.getTasksByTag( tlsTagNames['New Request'] );
-        });
+        }).catch( err => reject(err) );
     },
     
 
@@ -377,7 +400,7 @@ module.exports = {
         return new Promise( function(resolve, reject){
             client.projects.findAll({team:tlsVars.TEAM_TLSMEDIA}).then( function(projectList){
                 resolve(projectList.data);
-            });
+            }).catch( err => reject(err) );
         });
     },
 
@@ -423,7 +446,8 @@ module.exports = {
     /**
      * Create new task
      */
-    createTask(projectID, name, description, due_date, dataObj){
+    //createTask: function(projectID, name, description, due_date, dataObj){
+    createTask: function(name, dataObj){
         
         //1. Have to handle assignee here...have to make a function to 
         //   look at assignee data and get an id by a name or something
@@ -431,20 +455,21 @@ module.exports = {
         //2. Just have to quick test the due_date to make sure thats what the 
         //   API wants----may also have to do some JS date formatting
 
-        /*
+        console.log('data submitted to createTask func')
+        console.log(dataObj);
+
         return client.tasks.create({
                 'name': name,
-                'description': description,
-                //'assignee': {'id': '170705266868499'},
-                //'due_date': due_date //still have to test
+                'description': 'description',
+                'assignee': {'id': '170705266868499'},
                 'workspace': 36641419235321,
-                'projects': [projectID],//166216691534199
+                'projects': projectID,
                 'external': {
                     'data': JSON.stringify(dataObj)
                 }
             }
         );
-        */
+        
     }
 
 
